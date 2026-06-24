@@ -1,0 +1,19 @@
+.pulse-slider {
+	@apply appearance-none w-24 h-1 bg-pulse-white/10 rounded-full outline-none cursor-pointer overflow-hidden;
+	vertical-align: middle;
+}
+
+/* The Track (Background) */
+.pulse-slider::-webkit-slider-runnable-track {
+	@apply h-1 bg-pulse-white/10 rounded-full;
+}
+
+/* The Thumb (The Knob) - We make it invisible but use its position to 'pull' the green color */
+.pulse-slider::-webkit-slider-thumb {
+	@apply appearance-none w-0 h-0 bg-pulse-accent shadow-[-100vw_0_0_100vw_var(--color-pulse-accent)];
+}
+
+/* Hover effect to make it glow slightly */
+.pulse-slider:hover::-webkit-slider-runnable-track {
+	@apply bg-pulse-white/20;
+}

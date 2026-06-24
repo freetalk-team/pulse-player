@@ -1,0 +1,17 @@
+name: Album meta
+description: Fetch album meta from TheAudioDB
+
+config:
+  API_KEY:
+    label: API Key
+    type: password
+    required: true
+
+  baseUrl:
+    label: Base URL
+    type: text
+    default: https://www.theaudiodb.com/api/v1/json
+
+enabled: true
+type: album
+priority: 1

@@ -1,0 +1,23 @@
+name: MusicBrainz Cover Art
+description: Fetch album info using MusicBrainz
+
+schema:
+  - key: baseUrl
+    label: Base URL
+    type: text
+    default: https://musicbrainz.org/ws/2/release
+    readonly: true
+  - key: headers
+    label: Headers
+    type: keyvalue
+
+config:
+  headers:
+    userAgent:
+      label: User Agent
+      type: text
+      required: true
+      default: PulsePlayer/1.0 (team.freetalk@gmail.com)
+
+enabled: false
+type: album

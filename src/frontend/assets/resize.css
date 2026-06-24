@@ -1,0 +1,43 @@
+/* The 'hit area' wrapper */
+.resizer-container {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  cursor: col-resize;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Make it always "there" but very faint */
+  opacity: 0.3; 
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+/* Make it fully visible and slightly thicker when hovered */
+.resizer-container:hover, 
+.resizing-active {
+  opacity: 1;
+}
+
+/* Style the sash line */
+.v-sash {
+	--sash-width: 4px; /* Thinner when idle */
+	background-color: #444; /* Darker gray to match pulse-border */
+	border-radius: 80%;
+	height: 100%;
+	max-height: 98%;
+	width: var(--sash-width);
+	transition: all 0.2s;
+}
+
+/* Feedback when hovering or dragging */
+.resizer-container:hover .v-sash {
+	background-color: #666;
+	--sash-width: 6px;
+}
+
+.resizing-active .v-sash {
+	background-color: var(--color-pulse-accent) !important;
+	--sash-width: 6px;
+}

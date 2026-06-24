@@ -1,0 +1,377 @@
+<!-- <script>
+
+import { scrollHover } from "../../actions";
+
+import { currentRemote } from "../../stores/remote";
+
+</script>
+
+<div class="flex-grow flex flex-col min-h-0 min-w-0 overflow-hidden h-full">
+
+	<h1 class="text-pulse-white/80 bg-pulse-white/5 font-black tracking-wider rounded-xl p-4 m-4 text-3xl">
+		{#if $currentRemote}
+			<i class="fa-solid {$currentRemote.icon || 'fa-computer'} {$currentRemote.icon_color || 'text-pulse-accent'} mr-4"></i>
+			{$currentRemote.name}
+		{:else}
+			<i class="fa-solid fa-home mr-4"></i>
+			Home
+		{/if}
+	</h1>
+
+	<div
+		use:scrollHover
+		class="flex-grow custom-scroll overflow-y-auto px-6 relative"
+	>
+		<h1>Remote View</h1>
+	</div>
+</div> -->
+
+<script>
+	let activeTab = 'home';
+
+	const sharedPlaylists = [
+		{
+			id: 1,
+			title: 'Evening Chill',
+			tracks: 23,
+			image: 'https://picsum.photos/300?1'
+		},
+		{
+			id: 2,
+			title: 'BG Rap',
+			tracks: 41,
+			image: 'https://picsum.photos/300?2'
+		},
+		{
+			id: 3,
+			title: 'Late Night Drive',
+			tracks: 18,
+			image: 'https://picsum.photos/300?3'
+		}
+	];
+
+	const activity = [
+		'Pat shared playlist "Evening Chill"',
+		'Anna started listening to Daft Punk',
+		'Alex liked "Random Access Memories"',
+		'New live session created'
+	];
+
+	const albums = Array.from({ length: 12 }, (_, i) => ({
+		id: i,
+		title: `Album ${i + 1}`,
+		artist: 'Unknown Artist',
+		image: `https://picsum.photos/300?album=${i}`
+	}));
+
+	const tracks = Array.from({ length: 20 }, (_, i) => ({
+		id: i,
+		title: `Track ${i + 1}`,
+		artist: 'Artist Name',
+		duration: '3:42'
+	}));
+</script>
+
+<div class="flex h-full flex-col overflow-hidden bg-zinc-950 text-zinc-100">
+
+	<!-- HEADER -->
+	<div class="border-b border-zinc-800 p-5">
+
+		<div class="flex items-start justify-between">
+
+			<div>
+				<h1 class="text-2xl font-bold">
+					Living Room Player
+				</h1>
+
+				<div class="mt-1 flex items-center gap-3 text-sm text-zinc-400">
+					<span class="flex items-center gap-2">
+						<span class="h-2 w-2 rounded-full bg-green-500"></span>
+						Online
+					</span>
+
+					<span>12,483 tracks</span>
+				</div>
+			</div>
+
+			<div class="flex gap-2">
+				<button class="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium hover:bg-indigo-500">
+					Listen Live
+				</button>
+
+				<button class="rounded-xl border border-zinc-700 px-4 py-2 text-sm hover:bg-zinc-900">
+					Remote Control
+				</button>
+			</div>
+		</div>
+
+		<!-- TABS -->
+		<div class="mt-6 flex gap-6 border-b border-zinc-800">
+
+			<button
+				class={`pb-3 text-sm font-medium transition ${
+					activeTab === 'home'
+						? 'border-b-2 border-indigo-500 text-white'
+						: 'text-zinc-400 hover:text-white'
+				}`}
+				on:click={() => activeTab = 'home'}
+			>
+				Home
+			</button>
+
+			<button
+				class={`pb-3 text-sm font-medium transition ${
+					activeTab === 'library'
+						? 'border-b-2 border-indigo-500 text-white'
+						: 'text-zinc-400 hover:text-white'
+				}`}
+				on:click={() => activeTab = 'library'}
+			>
+				Library
+			</button>
+		</div>
+	</div>
+
+	<!-- CONTENT -->
+	<div class="flex-1 overflow-y-auto">
+
+		{#if activeTab === 'home'}
+
+			<div class="space-y-8 p-6">
+
+				<!-- NOW PLAYING -->
+				<section>
+					<h2 class="mb-4 text-lg font-semibold">
+						Now Playing
+					</h2>
+
+					<div class="flex gap-6 rounded-3xl border border-zinc-800 bg-zinc-900/50 p-5">
+
+						<img
+							src="https://picsum.photos/400"
+							class="h-44 w-44 rounded-2xl object-cover"
+							alt=""
+						/>
+
+						<div class="flex flex-1 flex-col justify-between">
+
+							<div>
+								<div class="text-xs uppercase tracking-wider text-zinc-500">
+									Currently Listening
+								</div>
+
+								<h3 class="mt-2 text-3xl font-bold">
+									Teardrop
+								</h3>
+
+								<div class="mt-1 text-zinc-400">
+									Massive Attack
+								</div>
+							</div>
+
+							<div>
+								<div class="mb-2 h-1.5 overflow-hidden rounded-full bg-zinc-800">
+									<div class="h-full w-1/2 bg-indigo-500"></div>
+								</div>
+
+								<div class="flex items-center justify-between text-sm text-zinc-500">
+									<span>2:31</span>
+									<span>5:12</span>
+								</div>
+
+								<button class="mt-4 rounded-xl bg-indigo-600 px-5 py-2 text-sm font-medium hover:bg-indigo-500">
+									Listen Along
+								</button>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- SHARED PLAYLISTS -->
+				<section>
+
+					<div class="mb-4 flex items-center justify-between">
+
+						<h2 class="text-lg font-semibold">
+							Recently Shared
+						</h2>
+
+						<button class="text-sm text-zinc-400 hover:text-white">
+							View all
+						</button>
+					</div>
+
+					<div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+
+						{#each sharedPlaylists as playlist}
+
+							<div class="group overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/40 transition hover:border-zinc-700 hover:bg-zinc-900">
+
+								<img
+									src={playlist.image}
+									class="aspect-video w-full object-cover transition duration-300 group-hover:scale-105"
+									alt=""
+								/>
+
+								<div class="p-4">
+
+									<h3 class="font-semibold">
+										{playlist.title}
+									</h3>
+
+									<div class="mt-1 text-sm text-zinc-400">
+										{playlist.tracks} tracks
+									</div>
+
+									<button class="mt-4 rounded-xl bg-zinc-800 px-4 py-2 text-sm hover:bg-zinc-700">
+										Play
+									</button>
+								</div>
+							</div>
+
+						{/each}
+					</div>
+				</section>
+
+				<!-- ACTIVITY -->
+				<section>
+
+					<h2 class="mb-4 text-lg font-semibold">
+						Recent Activity
+					</h2>
+
+					<div class="rounded-3xl border border-zinc-800 bg-zinc-900/40 p-5">
+
+						<div class="space-y-4">
+
+							{#each activity as item}
+
+								<div class="flex items-start gap-3">
+
+									<div class="mt-1 h-2 w-2 rounded-full bg-indigo-500"></div>
+
+									<div class="text-sm text-zinc-300">
+										{item}
+									</div>
+								</div>
+
+							{/each}
+						</div>
+					</div>
+				</section>
+
+			</div>
+
+		{:else}
+
+			<!-- LIBRARY -->
+
+			<div class="p-6">
+
+				<!-- SEARCH -->
+				<div class="mb-6 flex gap-3">
+
+					<input
+						type="text"
+						placeholder="Search library..."
+						class="flex-1 rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 outline-none placeholder:text-zinc-500 focus:border-indigo-500"
+					/>
+
+					<button class="rounded-2xl bg-zinc-900 px-5 hover:bg-zinc-800">
+						Filters
+					</button>
+				</div>
+
+				<!-- ALBUMS -->
+
+				<section>
+
+					<h2 class="mb-4 text-lg font-semibold">
+						Albums
+					</h2>
+
+					<div class="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6">
+
+						{#each albums as album}
+
+							<div class="group cursor-pointer">
+
+								<div class="overflow-hidden rounded-2xl bg-zinc-900">
+
+									<img
+										src={album.image}
+										class="aspect-square w-full object-cover transition duration-300 group-hover:scale-105"
+										alt=""
+									/>
+								</div>
+
+								<div class="mt-3">
+
+									<div class="truncate font-medium">
+										{album.title}
+									</div>
+
+									<div class="truncate text-sm text-zinc-400">
+										{album.artist}
+									</div>
+								</div>
+							</div>
+
+						{/each}
+					</div>
+				</section>
+
+				<!-- TRACKS -->
+
+				<section class="mt-10">
+
+					<h2 class="mb-4 text-lg font-semibold">
+						Tracks
+					</h2>
+
+					<div class="overflow-hidden rounded-3xl border border-zinc-800">
+
+						<table class="w-full text-sm">
+
+							<thead class="bg-zinc-900">
+
+								<tr class="text-left text-zinc-400">
+
+									<th class="px-5 py-4 font-medium">Title</th>
+									<th class="px-5 py-4 font-medium">Artist</th>
+									<th class="px-5 py-4 font-medium">Duration</th>
+								</tr>
+							</thead>
+
+							<tbody>
+
+								{#each tracks as track}
+
+									<tr class="border-t border-zinc-800 hover:bg-zinc-900/60">
+
+										<td class="px-5 py-4">
+											{track.title}
+										</td>
+
+										<td class="px-5 py-4 text-zinc-400">
+											{track.artist}
+										</td>
+
+										<td class="px-5 py-4 text-zinc-400">
+											{track.duration}
+										</td>
+									</tr>
+
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				</section>
+
+			</div>
+
+		{/if}
+
+	</div>
+
+</div>

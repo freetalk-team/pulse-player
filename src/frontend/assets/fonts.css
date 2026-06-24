@@ -1,0 +1,23 @@
+.font-cursive {
+	font-family: "Pinyon Script", cursive;
+}
+
+.font-lucida-sans {
+	font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+.font-cambria {
+	font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+}
+
+.font-arial {
+	font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+
+.font-georgia {
+	font-family: Georgia, 'Times New Roman', Times, serif;
+}
+
+.font-verdana {
+	font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
