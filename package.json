@@ -34,8 +34,9 @@
     "server": "electron-vite dev -- headless",
     "build": "electron-vite build",
     "dev:web": "vite --config web.vite.config.mjs",
-    "build:web": "vite build --config web.vite.config.mjs && npm run build:web:icon",
+    "build:web": "vite build --config web.vite.config.mjs && cp resources/favicon.ico resources/web/",
     "build:release": "npm run build && npm run build:web",
+    "build:icon": "cp resources/icon.png build/icon.png && convert build/icon.png -define icon:auto-resize=256,128,64,48,32,16 build/icon.ico",
     "build:web:icon": "convert resources/icon.png -define icon:auto-resize=256,128,64,48,32,16 resources/web/favicon.ico",
     "dev:demo": "vite --config demo.vite.config.mjs",
     "build:demo": "vite build --config demo.vite.config.mjs",
@@ -43,10 +44,7 @@
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build:release && electron-builder --win",
     "build:mac": "npm run build:release && electron-builder --mac",
-    "build:linux": "npm run build:release && electron-builder --linux",
-    "build:icon": "cp resources/icon.png build/icon.png && convert build/icon.png -define icon:auto-resize=256,128,64,48,32,16 build/icon.ico",
-    "install:wine": "docker run --rm -ti -v ${PWD}:/project -v ${PWD}/../node-ffmpeg:/node-ffmpeg electronuserland/builder:wine bash -c 'npm install'",
-    "build:wine": "docker run --rm -ti -e ELECTRON_CACHE=/root/.cache/electron -e ELECTRON_BUILDER_CACHE=/root/.cache/electron-builder -v ${PWD}:/project -v $HOME/.wine/.cache/electron:/root/.cache/electron -v $HOME/.wine/.cache/electron-builder:/root/.cache/electron-builder -v $HOME/.wine/.npm:/root/.npm electronuserland/builder:wine bash -c 'npm run build:win'"
+    "build:linux": "npm run build:release && electron-builder --linux"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",

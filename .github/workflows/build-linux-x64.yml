@@ -1,0 +1,33 @@
+name: Build Linux x64
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-linux-x64:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Linux x64
+        run: npm run build:linux -- --x64
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pulse-player-linux-x64
+          path: dist/*
