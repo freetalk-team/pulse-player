@@ -1,0 +1,26 @@
+Pulse Player
+
+Usage:
+  pulse-player [command] [options]
+
+Commands:
+
+  (no command)                  Start the desktop application
+
+  headless                      Start the server without the desktop UI
+
+  import <path> [<path> ...]    Import media files or directories
+
+  help                          Show this help message
+
+Examples:
+
+  pulse-player
+  pulse-player headless
+  pulse-player import ~/Music
+  pulse-player import ~/Music/song.mp3 ~/Downloads/music
+  pulse-player help
+
+Copyright © 2026 Freetalk Team
+Licensed under the MIT License.
+https://github.com/freetalk-team/pulse-player

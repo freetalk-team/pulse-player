@@ -2,16 +2,15 @@
 
 import { tooltip } from "../../actions";
 
-export let order;
-export let onChange = () => {};
-
-// You can move this to a store later to sync with HomeView
-
-const options = [
+const defaultOptions = [
 	{ id: 'rating', icon: 'fa-star', label: 'Top Rated' },
 	{ id: 'recent', icon: 'fa-clock-rotate-left', label: 'Recently Played' },
 	{ id: 'created', icon: 'fa-calendar-plus', label: 'Recently Added' }
 ];
+
+export let order;
+export let onChange = () => {};
+export let options = defaultOptions;
 
 function setSortOrder(id) {
 	if (id !== order) {

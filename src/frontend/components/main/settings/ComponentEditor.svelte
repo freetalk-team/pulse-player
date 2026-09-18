@@ -7,7 +7,7 @@ import { selectedComponent, isLoading, saveComponent, enableComponent } from '..
 import CodeEditor from '../../ui/CodeEditor.svelte';
 import ConfigTable from './ConfigTable.svelte';
 import Loading from '../Loading.svelte';
-import ToggleButton from '../../ui/ToggleButton.svelte';
+import ToggleButton from '../../ui/controls/ToggleButton.svelte';
 
 
 let activeTab = 'config';

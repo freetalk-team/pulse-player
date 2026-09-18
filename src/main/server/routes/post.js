@@ -1,5 +1,5 @@
 
-import db from '../../db'
+import remote from '../../services/remote';
 
 import { normalizeCoverPaths, normalizePaths } from './common'
 
@@ -7,12 +7,22 @@ export default async function routes(app) {
 
 	app.get('/', async (req, reply) => {
 
-		let { offset, limit } = req.query;
+		const { limit, offset, created_at } = req.query;
+		const query = {};
 
-		limit = limit ? parseInt(limit) : 10;
-		offset = offset ? parseInt(offset) : 0;
+		if (created_at) {
+			query.created_at = created_at;
+		}
+		else {
+			query.limit = limit ? parseInt(limit) : 10;
+			query.offset = offset ? parseInt(offset) : 0;
+		}
 
-		const posts = db.getPosts(offset, limit);
+		const uid = parseInt(req.query.uid) || null;
+
+		console.debug('[SERVER] query posts:', query);
+
+		const posts = await remote.queryPosts(query, null, uid);
 
 		for (const i of posts) {
 
@@ -36,12 +46,26 @@ export default async function routes(app) {
 		return posts;
 	});
 
-	app.get('/:id/comments', async (req, reply) => {
+	app.get('/comments/:id', async (req, reply) => {
 		let { id } = req.params;
+		let { uid } = req.query;
 
 		id = parseInt(id);
+		uid = parseInt(uid) || null;
 
-		const comments = db.getComments(id);
+		const comments = await remote.getComments(id, null, null, uid);
+
+		return comments;
+	});
+
+	app.get('/replies/:id', async (req, reply) => {
+		let { id } = req.params;
+		let { uid } = req.query;
+
+		id = parseInt(id);
+		uid = parseInt(uid) || null;
+
+		const comments = await remote.getComments(null, id, null, uid);
 
 		return comments;
 	});

@@ -7,10 +7,9 @@ import { isVideoView } from './play';
 // Stores the currently selected album object
 export const activeOrder = writable('rating');
 export const searchQuery = writable("");
-export const isEditMode = writable(false);
-export const activeEditPlaylist = writable(null); // Holds the playlist object being edited
+export const editMode = writable(false);
+export const activeEditPlaylist = writable(null); 
 export const activeEditPlayset = writable(null);
-export const selectedTracks = writable([]); // For the "Select Mode" / Batch 
 export const isTheaterMode = writable(false);
 
 
@@ -20,6 +19,47 @@ export const lastSelectedId = writable(null);
 isVideoView.subscribe(v => {
 	if (!v) isTheaterMode.set(false);
 });
+
+class EditableStore {
+	#editing = true;
+	#store = writable([]);
+	#count = 0;
+
+	set value(v) {
+		this.#editing = true;
+		this.#count = v.length;
+		this.#store.set(v);
+	}
+
+	get value() {
+		return get(this.#store);
+	}
+
+	get store() { return this.#store; }
+
+	subscribe(cb) {
+
+		this.#store.subscribe(v => {
+			if (this.#editing) {
+				this.#editing = false;
+				return;
+			}
+
+			const reorder = v?.length == this.#count;
+			this.#count = v?.length ?? 0;
+
+			cb(v, reorder);
+		});
+	}
+
+	add(values) {
+		this.#editing = true;
+		this.#store.update(v => [...v, ...values]);
+	}
+}
+
+export const activeEditPlaysetMembers = new EditableStore;
+export const activeEditPlaylistTracks = new EditableStore;
 
 export function toggleTrackSelection(trackId, isCtrl, isShift, tracks) {
 

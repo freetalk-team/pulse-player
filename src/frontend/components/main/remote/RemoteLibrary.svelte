@@ -3,27 +3,28 @@
 import { onMount } from 'svelte';
 
 import { scrollHover } from '../../../actions';
-import { sleep } from '../../../utils/sleep';
 
+import { isLoading, hasMore, fetch, items } from '../../../stores/remote/library';
 import { currentRemote } from '../../../stores/remote';
 
-import Loading from '../Loading.svelte';
 import Video from '../Video.svelte';
 import Tabs from '../Tabs.svelte';
 import Search from '../Search.svelte';
 import Filters from '../Filters.svelte';
-import TrackCard from '../TrackCard.svelte';
-import AlbumCard from '../AlbumCard.svelte';
-import PlaylistCard from '../PlaylistCard.svelte';
-import GridSentinel from '../LoadSentinel.svelte';
+import Grid from '../Grid.svelte';
 
-let remote;
+import TrackCard from './TrackCard.svelte';
+import AlbumCard from './AlbumCard.svelte';
+import PlaylistCard from './PlaylistCard.svelte';
+import PlaysetCard from './PlaysetCard.svelte';
+
+export let onDownload;
 
 const collectionTabs = [
 	{ id: 'track', label: 'Tracks', icon: 'fa-music' },
-	{ id: 'playset', label: 'Playsets', icon: 'fa-clock' },
-	{ id: 'playlist', label: 'Playlists', icon: 'fa-list-ul' },
-	{ id: 'album', label: 'Albums', icon: 'fa-record-vinyl' }
+	{ id: 'playsets', label: 'Playsets', icon: 'fa-clock' },
+	{ id: 'playlists', label: 'Playlists', icon: 'fa-list-ul' },
+	{ id: 'albums', label: 'Albums', icon: 'fa-record-vinyl' }
 ];
 
 const filterTabs = [
@@ -32,158 +33,104 @@ const filterTabs = [
 	{ id: 'video', label: 'Video', icon: 'fa-film' }
 ];
 
-let activeCollection = 'track';
-let activeFilter = 'all';
-let offset = 0;
-let lastRequestId = 0;
-let sort = 'rating';
-let query = '';
-let items = [];
-let loading = false;
-let hasMore = false;
+const params = {
+	filter: 'all',
+	sort: 'recent',
+	query: ''
+};
 
-let apiCall = api.getTracks;
+let collection = 'track';
 let component = TrackCard;
 
-const LIMIT = 30;
-const LOADING_TIMEOUT = 800;
+const fetchItems = (reset) => fetch(collection, params, reset);
 
-onMount(() => {
-	
-	const unsubscribe = currentRemote.subscribe(current => {
-		remote = current;
-		onChange();
-	});
-	
-	return unsubscribe;
-});
+onMount(() => currentRemote.subscribe(remote => {
+	console.debug('Remote library fetch:', remote);
 
-function selectCollection(id) {
-	//activeTab.set(id);
-	activeCollection = id;
+	if (remote)
+		fetchItems(true);
+}));
 
-	switch (id) {
+function onCollectionChange() {
+
+	console.debug('Remote collection change:', collection);
+
+	switch (collection) {
 		case 'track':
-		apiCall = api.getTracks;
 		component = TrackCard;
 		break;
 
-		default:
-		apiCall = (...args) => api.getCollections(id, ...args);
-		component = id == 'album' ? AlbumCard : PlaylistCard;
+		case 'albums':
+		component = AlbumCard;
+		break;
+
+		case 'playlists':
+		component = PlaylistCard;
+		break;
+
+		case 'playsets':
+		component = PlaysetCard;
 		break;
 	}
 
-	onChange();
+	fetchItems(true);
 }
 
-function selectFilter(filter) {
-	activeFilter = filter;
-	onChange();
+function onFilterChange(filter) {
+	params.filter = filter;
+	fetchItems(true);
 }
 
-function onChange() {
-	items = [];
-	offset = 0;
+function onSortChange(order) {
+	params.sort = order;
+	fetchItems(true);
+}
 
-	fetch();
+function onSearchChange(query) {
+	params.query = query;
+	fetchItems(true);
 }
 
 
-function getQuery() {
-	return {
-		query,
-		sort,
-		filter: activeFilter,
-		offset,
-		limit: LIMIT
-	}
-}
-
-async function fetch() {
-
-	if (loading) return;
-
-	loading = true;
-	hasMore = true;
-
-	// 1. Generate a unique ID for this specific fetch call
-	const requestId = ++lastRequestId;
-	const query = getQuery();
-
-
-	// console.trace('Fetchig tracks ...');
-
-	try {
-		const [newItems] = await Promise.all([
-			apiCall(query, remote.id),
-			sleep(LOADING_TIMEOUT) 
-		]);
-
-		//console.debug('ITEMS:', query, newItems);
-
-		// 2. THE FIX: If a newer request has started, discard this one!
-		if (requestId !== lastRequestId) {
-			// console.log('🚫 Discarding stale search result');
-			return; 
-		}
-
-		if (newItems.length < LIMIT) 
-			hasMore = false;
-		
-		// ✅ REASSIGN for reactivity
-		items = [...items, ...newItems];
-
-		offset += LIMIT;
-
-	} finally {
-		// 3. Only stop loading if this is still the active request
-		if (requestId === lastRequestId) {
-			loading = false;
-		}
-
-		// console.debug('Fetching done:', loading, hasMore);
-	}
-
-}
 
 </script>
 
 
 <div class="flex flex-col gap-4 mx-4 my-5">
-	<div class="flex items-center justify-between">
-		<Tabs activeTab={activeCollection} tabs={collectionTabs} onSelect={selectCollection} />
+	<div class="flex items-center justify-between @container/inline-size">
+		<Tabs bind:activeTab={collection} tabs={collectionTabs} onSelect={onCollectionChange} />
 
-		{#if activeCollection == 'track'}
-			<Tabs activeTab={activeFilter} tabs={filterTabs} onSelect={selectFilter} />
+		{#if collection == 'track'}
+			<div class="hidden @[850px]:block">
+				<Tabs activeTab={params.filter} tabs={filterTabs} onSelect={onFilterChange} />
+			</div>
 		{/if}
 	</div>
 
 	<div class="flex items-center justify-between">
 		<div class="flex-grow max-w-md">
-			<Search bind:query={query} onInput={onChange} />
+			<Search query={params.query} onInput={onSearchChange} />
 		</div>
-		<Filters bind:order={sort} onChange={onChange} />
+		<Filters order={params.sort} onChange={onSortChange} />
 	</div>
 </div>
 
 
-<div class="flex-1 overflow-y-auto custom-scroll min-w-0 flex flex-col"
+<div class="flex-1 overflow-y-auto custom-scroll min-w-0 flex flex-col px-6"
     use:scrollHover
 >
 	<Video />
 
-	<div class="min-w-0 p-8 grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-6">
-		{#each items as item}
-			<svelte:component
-				this={component}
-				{item}
-				canEdit={false}
-				canDnd={false}
-				searchQuery={query}
-			/>
-		{/each}
+	<div class="py-4">
+		<Grid 
+			{component}
+			items={$items}
+			searchQuery={params.query}
+			fetch={fetchItems}
+			isLoading={$isLoading} 
+			hasMore={$hasMore}
+			componentProps={{onDownload}}
+		/>
 	</div>
-        
-	<GridSentinel isLoading={loading} {hasMore} {fetch} />
+
 </div>

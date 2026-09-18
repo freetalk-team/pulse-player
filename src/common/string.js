@@ -22,6 +22,17 @@ String.prototype.capitalizeFirstLetter = function() {
 	return this.charAt(0).toUpperCase() + this.slice(1);
 }
 
+String.prototype.titleCase = function() {
+	return this
+		.split(' ')
+		.map(i => i ? i[0].toLocaleUpperCase() + i.substring(1).toLocaleLowerCase() : i)
+		.join(' ');
+}
+
+String.prototype.strip = function() {
+	return this.trim().replace(/  +/g, ' ');
+}
+
 String.prototype.toArrayBuffer = function() {
 	const encoder = new TextEncoder(); // Creates a new TextEncoder instance
 	return encoder.encode(this); // Encodes the string and extracts the ArrayBuffer
@@ -187,6 +198,33 @@ String.prototype.splitLast = function(str) {
 	}
 
 	return [before, after];
+}
+
+String.prototype.normalizeFilename = function(maxLength = 80) {
+	let result = this
+		.normalize('NFKC')
+		.replace(/[<>:"/\\|?*\x00-\x1F]/g, '')
+		.replace(/\s+/g, ' ')
+		.trim()
+		.replace(/^\.+|\.+$/g, '')
+		.slice(0, maxLength)
+		.trim();
+
+	// Windows reserved filenames
+	if (/^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\..*)?$/i.test(result)) {
+		result = `_${result}`;
+	}
+
+	return result;
+}
+
+String.prototype.normalizeSearch = function() {
+	return this.normalize('NFKD')
+		.toLowerCase()
+		.replace(/[\u0300-\u036f]/g, '')
+		.replace(/[^\p{L}\p{N}\s]/gu, ' ')
+		.replace(/\s+/g, ' ')
+		.trim();
 }
 
 String.sort = function(a, b) {

@@ -2,16 +2,13 @@
 
 import { onMount } from 'svelte';
 
-import { remotes, loadRemotePlayers, selectRemote, currentRemote } from '../../stores/remote';
+import { remotes, loadRemotePlayers, selectRemote, currentRemote, unread } from '../../stores/remote';
 
 import RemoteItem from './RemoteItem.svelte';
 import List from '../ui/ListFlex.svelte';
+import Badge from '../ui/BadgeCircle.svelte';
 
-onMount(() => {
-
-	loadRemotePlayers();
-
-});
+onMount(() => loadRemotePlayers());
 
 $: isHomeSelected = !$currentRemote;
 
@@ -25,19 +22,23 @@ $: isHomeSelected = !$currentRemote;
 	<div class="flex justify-center items-center w-12 h-12 rounded flex-shrink-0 bg-gradient-to-br from-white/5 to-transparent">
 		<i class="fa-solid fa-home text-violet-400 text-[20px]"></i>
 	</div>
-	<h2 class="font-semibold text-pulse-white/60 group-hover/item:text-pulse-white">
+	<h2 class="flex-grow font-semibold text-pulse-white/60 group-hover/item:text-pulse-white">
 		Home
 	</h2>
+	{#if !isHomeSelected && $unread > 0}
+		<Badge count={$unread} />
+	{/if}
 </div>
 
 <List 
+	ItemComponent={RemoteItem}
 	title="Players" 
 	icon="fa-house-laptop"
 	iconColor="text-blue-500"
 	items={remotes}
-	itemComponent={RemoteItem}
 	onSelect={selectRemote}
-	selectedItem={currentRemote}
+	selectedItem={$currentRemote}
+	hideEmpty={true}
 >
 	
 </List>

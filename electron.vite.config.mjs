@@ -1,10 +1,22 @@
 import { defineConfig } from 'electron-vite'
-import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { join, resolve } from 'path'
+import { execSync } from "node:child_process";
 
+import { svelte } from '@sveltejs/vite-plugin-svelte'
+import tailwindcss from '@tailwindcss/vite'
+
+// const debugWorker = process.env.DEBUG_WORKER === '1';
+
+const isProd = process.env.NODE_ENV === 'production';
 
 export default defineConfig({
+
   
+
+  esbuild: {
+    drop: ['console', 'debugger']
+  },
+
   main: {
     resolve: {
       alias: {
@@ -12,26 +24,53 @@ export default defineConfig({
       }
     },
     build: {
-      sourcemap: true, // 👈 Add this line
+      // minify: !debugWorker,
+      //minify: true,
+      minify: isProd ? 'terser' : false, // uses terser
+      //minify: 'esbuild',
+      sourcemap: !isProd, // 👈 Add this line
+      externalizeDeps: {
+        exclude: ['electron-store']
+      },
       rollupOptions: {
         // external: ['electron', 'node:worker_threads'],
         // Ensure the worker is treated as an entry point if it's not being auto-detected
         input: {
           index: join(__dirname, 'src/main/index.js'),
-          scanner2: join(__dirname, 'src/main/workers/scanner2.js')
+          app: join(__dirname, 'src/main/app.js'),
+          headless: join(__dirname, 'src/main/headless.js'),
+          import: join(__dirname, 'src/main/import.js'),
+          scanner: join(__dirname, 'src/main/workers/import.worker.js'),
+          downloader: join(__dirname, 'src/main/workers/downloader.js')
         }
       },
-      minify: true,
       terserOptions: {
         compress: {
-          drop_console: true, // 👈 Removes all console.logs
-          drop_debugger: true // 👈 Removes all debugger; statements
+          drop_console: false, // 👈 Removes all console.logs
+          drop_debugger: true,// 👈 Removes all debugger; statements
+          pure_funcs: ['console.debug']
+          // pure_funcs: [
+          //   'console.log',
+          //   'console.debug',
+          //   'console.info',
+          //   'console.trace'
+          // ]
         }
       }
-    }
+    },
   },
   preload: {},
   renderer: {
+    define: {
+      __PLATFORM__: JSON.stringify('desktop')
+      // __PLATFORM__: JSON.stringify(mode === 'development' ? 'desktop' : 'web'),
+      //__CAN_EDIT__: mode === 'development',
+    },
+
+    server: {
+      port: 5174, // FIX: Bypasses the port collision with your website
+      strictPort: true
+    },
     resolve: {
       alias: {
         '@pkg': resolve(__dirname, 'package.json'),
@@ -41,13 +80,32 @@ export default defineConfig({
       }
     },
     build: {
-      sourcemap: true, // Enable for production builds
+      sourcemap: !isProd, // Enable for production builds
+      minify: isProd ? 'terser' : false,
+      terserOptions: {
+        compress: {
+          drop_console: true, // 👈 Removes all console.logs
+          drop_debugger: true // 👈 Removes all debugger; statements
+        }
+      }
     },
     // This is the important one for Dev mode
-    css: { devSourcemap: true },
-    plugins: [svelte()]
-  },
-  server: {
-    sourcemap: true // Ensure dev server provides maps
+    css: { 
+      devSourcemap: !isProd 
+    },
+    plugins: [
+      tailwindcss(),
+      svelte({
+        onwarn(warning, handler) {
+          const ignore = ['element_invalid_self_closing_tag'];
+
+          if (ignore.includes(warning.code) || warning.code.startsWith('a11y_')) {
+            return;
+          }
+
+          handler(warning);
+        }
+      })
+    ]
   }
 })

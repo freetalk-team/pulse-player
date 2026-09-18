@@ -2,11 +2,13 @@
 
 import { enableComponent } from "../../stores/components";
 
-import ToggleButton from "../ui/ToggleButtonSmall.svelte";
+import ToggleButton from "../ui/controls/ToggleButtonSmall.svelte";
 
 export let item;
 export let isSelected = false;
-export let onSelect = () => {}
+export let onSelect = () => {};
+export let actions;
+export let ctx;
 
 function handleToggle(enable) {
 	enableComponent(item, enable);
@@ -31,7 +33,7 @@ function handleToggle(enable) {
 			<div 
 				class="hidden group-hover/item:flex items-center gap-2 pr-1 h-full transition-all" 	on:click|stopPropagation
 			>
-				<slot name="actions" />
+				{@render actions?.(item, ctx)}
 			</div>
 		</div>
 		<div class="flex items-center">

@@ -1,36 +1,27 @@
 
-import db from '../../db'
-
-import { normalizePaths, normalizeCoverPaths } from './common'
+import lib from '../../services/library';
 
 export default async function routes(app) {
 
-	app.get('/', async (req, reply) => {
+	// app.get('/', async (req, reply) => {
 
-		// console.debug('Get tracks:', req.query);
+	// 	// console.debug('Get tracks:', req.query);
 
-		// const base = `${req.protocol}://${req.headers.host}`;
+	// 	// const base = `${req.protocol}://${req.headers.host}`;
 
-		const { filter, query, sort, offset, limit } = req.query;
-		const albums = db.getCollections('album', query, sort, offset, limit);
+	// 	query.limit = query.limit ? parseInt(query.limit) : 50;
+	// 	query.offset = query.offset ? parseInt(query.offset) : 0;
 
-		//console.debug('Tracks', tracks);
+	// 	const playlists = db.library.queryCollections('playlists', query);
 
-		return normalizeCoverPaths(albums);
-	});
+	// 	//console.debug('Tracks', tracks);
+
+	// 	return normalizeCoverPaths(playlists);
+	// });
 
 	app.get('/:id/tracks', async (req, reply) => {
-
-		let { offset, limit } = req.query;
-		let { id } = req.params;
-
-		id = parseInt(id);
-		offset = offset ? parseInt(offset) : 0;
-		limit = limit ? parseInt(limit) : 200;
-
-		const tracks = db.getPlaylistTracks(id, offset, limit);
-
-		return normalizePaths(tracks);
+		const id = parseInt(req.params.id);
+		return lib.getPlaylistTracks(id, true);	
 	});
 	
 }

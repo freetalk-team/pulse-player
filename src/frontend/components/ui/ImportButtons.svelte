@@ -5,13 +5,11 @@ import { tooltip } from "../../actions";
 
 async function handleImportFiles() {
 	const paths = await api.dialogOpenFile();
-
 	handleImport(paths);
 }
 
 async function handleImportFolders() {
 	const paths = await api.dialogOpenDirectory();
-
 	handleImport(paths);
 }
 
@@ -19,7 +17,7 @@ async function handleImport(paths) {
 	if (!paths || paths.length === 0) return;
 	
 	try {
-		console.log('Scanning paths:', paths);
+		console.debug('Scanning paths:', paths);
 		
 		await api.scanFolders(paths);
 	} catch (err) {

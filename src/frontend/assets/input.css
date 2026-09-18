@@ -1,0 +1,9 @@
+
+.input,
+input.select {
+	@apply bg-white/5 border-zinc-600/40 text-xs p-2 rounded outline-none border border-transparent focus:border-pulse-accent/30 transition-all placeholder:text-gray-600;
+}
+
+.dropdown {
+	@apply bg-pulse-zinc-950 border border-pulse-zinc-800 text-pulse-zinc-200 rounded-xl shadow-2xl;
+}

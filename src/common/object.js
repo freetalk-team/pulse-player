@@ -259,6 +259,37 @@ Object.hashHex = function(o) {
 	return Object.hash(o).toString(16);
 }
 
+Object.equal = function(obj1, obj2) {
+	/* Step - 1: */
+	if (!isObject(obj1) || !isObject(obj2)) return false;
+
+	/* Step - 2: */
+	// converting them into array that contain keys of objects
+	const obj1Keys = Object.keys(obj1),
+		obj2Keys = Object.keys(obj2);
+
+	/* Step - 3: */
+	// if number of keys are not same then we can say they are not same
+	if (obj1Keys.length !== obj2Keys.length) return false;
+
+	/* Step - 4: */
+	for (const key of obj1Keys) {
+		if (obj1[key] !== obj2[key] && !isNaN(obj1[key]) && !isNaN(obj2[key])) {
+		return false;
+		}
+	}
+	
+	return true;
+}
+
+Object.undefinedAsNull = function(o) {
+	for (const [k, v] of Object.entries(o))
+		if (v === undefined)
+			o[k] = null;
+
+	return o;
+}
+
 Array.repeat = function(n, v=0) {
 	return new Array(n).fill(0);
 }

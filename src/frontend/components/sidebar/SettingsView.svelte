@@ -8,9 +8,9 @@ import { tooltip } from '../../actions';
 import { currentSettings } from '../../stores/settings';
 import { albumComponents, trackComponents, loadComponents, loadComponent, selectedComponent, newComponent, deleteComponent } from '../../stores/components';
 
-import List from '../ui/List.svelte';
-import ListFlex from '../ui/ListFlex2.svelte';
+import ListFlex from '../ui/ListFlex.svelte';
 import ComponentItem from './ComponentItem.svelte';
+import FeaturesItem from './FeaturesItem.svelte';
 
 const settings = [
 	{
@@ -22,6 +22,10 @@ const settings = [
 		id: 'ui',
 		title: 'Interface',
 		icon: 'fa-palette',
+	},
+	{
+		id: 'features',
+		component: FeaturesItem
 	},
 	{
 		id: 'about',
@@ -59,17 +63,21 @@ function onSelectComponent(item) {
 				: 'text-gray-400 hover:bg-pulse-white/5 hover:text-gray-200'
 			}"
 	>
-		<div class="flex items-center gap-4">
-			<div class="w-6 text-center text-lg">
-				<i class="fa-solid {item.icon} {item.iconColor || ''}"></i>
+		{#if item.component}
+			<svelte:component this={item.component} />
+		{:else}
+			<div class="flex items-center gap-4">
+				<div class="w-6 text-center text-lg">
+					<i class="fa-solid {item.icon} {item.iconColor || ''}"></i>
+				</div>
+				<span class="text-sm font-semibold">{item.title}</span>
 			</div>
-			<span class="text-sm font-semibold">{item.title}</span>
-		</div>
+		{/if}
 	</div>
 
 {/each}
 
-{#if platform.import}
+{#if __PLATFORM__ === 'desktop'}
 
 <div class="flex flex-col mt-4 gap-2">
 	<h4 class="text-gray-500 truncate uppercase font-semibold tracking-wider px-2">
@@ -82,52 +90,44 @@ function onSelectComponent(item) {
 	{/each} -->
 
 	<ListFlex
+		ItemComponent={ComponentItem}
 		title={"Album"}
 		icon={"fa-record-vinyl text-gray-700"}
-		itemComponent={ComponentItem}
 		items={albumComponents}
 		onSelect={onSelectComponent}
 		selectedItem={selectedComponent}
 		reorder={true}
 	>
-		<div slot="actions">
+		{#snippet actions()}
 			<button 
-				class="text-gray-500 w-4 h-4 hover:text-orange-500 transition-colors cursor-pointer"
+				class="text-gray-500 hover:text-orange-500 transition-colors cursor-pointer"
 				use:tooltip={"New component"}
 				on:click={() => newComponent('album')}
 			>
 				<i class="fa-solid fa-plus text-xs"></i>
 			</button>
-		</div>
-		<div 
-			slot="item_actions"  
-			class="gap-2 flex items-center"
-			let:index let:count let:move let:item
-		>
-			{#if index > 0}
-				<button 
-					aria-label="Move up"
-					class="w-5 h-5 flex items-center justify-center hover:bg-white/10 rounded text-gray-500 hover:text-pulse-accent"
-					disabled={index === 0}
-					on:click|stopPropagation={() => move(index, -1)}
-					use:tooltip={"Up"}
-				>
-					<i class="fa-solid fa-chevron-up text-[9px]"></i>
-				</button>
-			{/if}
+		{/snippet}
+
+		{#snippet itemActions(item, ctx)}
+			<button 
+				aria-label="Move up"
+				class="w-5 h-5 flex items-center justify-center hover:bg-white/10 rounded text-gray-500 hover:text-pulse-accent"
+				class:hidden={ctx.first()}
+				on:click={() => ctx.up()}
+				use:tooltip={"Up"}
+			>
+				<i class="fa-solid fa-chevron-up text-[9px]"></i>
+			</button>
 			
-			{#if index < count - 1}
-				<!-- Move Down -->
-				<button 
-					aria-label="Move down"
-					class="w-5 h-5 flex items-center justify-center hover:bg-white/10 rounded text-gray-500 hover:text-pulse-accent"
-					disabled={index === count - 1}
-					on:click|stopPropagation={() => move(index, 1)}
-					use:tooltip={"Down"}
-				>
-					<i class="fa-solid fa-chevron-down text-[9px]"></i>
-				</button>
-			{/if}
+			<button 
+				aria-label="Move down"
+				class="w-5 h-5 flex items-center justify-center hover:bg-white/10 rounded text-gray-500 hover:text-pulse-accent"
+				class:hidden={ctx.last()}
+				on:click={() => ctx.down()}
+				use:tooltip={"Down"}
+			>
+				<i class="fa-solid fa-chevron-down text-[9px]"></i>
+			</button>
 
 			{#if !item.builtin}
 				<button class="text-gray-500 hover:text-red-500 transition-colors leading-none"
@@ -138,56 +138,47 @@ function onSelectComponent(item) {
 					<i class="fa-solid fa-trash-can text-[10px]"></i>
 				</button>
 			{/if}
-		</div>
+		{/snippet}
 	</ListFlex>
 
 	<ListFlex
+		ItemComponent={ComponentItem}
 		title={"Track"}
 		icon={"fa-music text-pulse-accent"}
-		itemComponent={ComponentItem}
 		items={trackComponents}
 		onSelect={onSelectComponent}
 		selectedItem={selectedComponent}
 		reorder={true}
 	>
-		<div slot="actions">
+		{#snippet actions()}
 			<button 
-				class="text-gray-500 w-4 h-4 hover:text-orange-500 transition-colors cursor-pointer"
+				class="text-gray-500 hover:text-orange-500 transition-colors cursor-pointer"
 				use:tooltip={"New component"}
 				on:click={() => newComponent('track')}
 			>
 				<i class="fa-solid fa-plus text-xs"></i>
 			</button>
-		</div>
-		<div 
-			slot="item_actions"  
-			class="gap-2 flex items-center"
-			let:index let:count let:move let:item
-		>
-			{#if index > 0}
-				<button 
-					aria-label="Move up"
-					class="w-5 h-5 flex items-center justify-center hover:bg-white/10 rounded text-gray-500 hover:text-pulse-accent"
-					disabled={index === 0}
-					on:click|stopPropagation={() => move(index, -1)}
-					use:tooltip={"Up"}
-				>
-					<i class="fa-solid fa-chevron-up text-[9px]"></i>
-				</button>
-			{/if}
+		{/snippet}
+		{#snippet itemActions(item, ctx)}
+			<button 
+				aria-label="Move up"
+				class="w-5 h-5 flex items-center justify-center hover:bg-white/10 rounded text-gray-500 hover:text-pulse-accent"
+				class:hidden={ctx.first()}
+				on:click={() => ctx.up()}
+				use:tooltip={"Up"}
+			>
+				<i class="fa-solid fa-chevron-up text-[9px]"></i>
+			</button>
 			
-			{#if index < count - 1}
-				<!-- Move Down -->
-				<button 
-					aria-label="Move down"
-					class="w-5 h-5 flex items-center justify-center hover:bg-white/10 rounded text-gray-500 hover:text-pulse-accent"
-					disabled={index === count - 1}
-					on:click|stopPropagation={() => move(index, 1)}
-					use:tooltip={"Down"}
-				>
-					<i class="fa-solid fa-chevron-down text-[9px]"></i>
-				</button>
-			{/if}
+			<button 
+				aria-label="Move down"
+				class="w-5 h-5 flex items-center justify-center hover:bg-white/10 rounded text-gray-500 hover:text-pulse-accent"
+				class:hidden={ctx.last()}
+				on:click={() => ctx.down()}
+				use:tooltip={"Down"}
+			>
+				<i class="fa-solid fa-chevron-down text-[9px]"></i>
+			</button>
 
 			{#if !item.builtin}
 				<button class="text-gray-500 hover:text-red-500 transition-colors leading-none"
@@ -198,7 +189,7 @@ function onSelectComponent(item) {
 					<i class="fa-solid fa-trash-can text-[10px]"></i>
 				</button>
 			{/if}
-		</div>
+		{/snippet}
 	</ListFlex>
 </div>
 

@@ -11,12 +11,12 @@ export const selectedFilter = writable('all'); // 'all', 'audio', or 'video'
 
 export function selectFilter(type) {
 	// console.log('Set selected filter:', type);
+	selectedFilter.set(type);
 
 	selectedAlbum.set(null);
 	selectedPlaylist.set(null);
 	selectedPlayset.set(null);
 
-	selectedFilter.set(type);
 };
 
 export async function selectAlbum(album) {
@@ -33,6 +33,7 @@ export async function selectAlbum(album) {
 	// isEditMode.set(false);
 
 	selectedPlaylist.set(null);
+	selectedPlayset.set(null);
 	// activeEditPlaylist.set(null);
 
 	selectedAlbum.set(album);

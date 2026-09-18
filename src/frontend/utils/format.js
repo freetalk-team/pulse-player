@@ -23,15 +23,17 @@ export function formatTime(seconds) {
 	return duration;
 }
 
-export function capitlizeFirstLetter(str) {
-	return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
 export function formatDescription(track) {
 	if (track.artist && track.album)
 		return `${track.artist} • ${track.album}`;
 
 	return track.artist || track.album || 'Unknown';
+}
+
+export function formatSize(size) {
+	if (size > 1000*1024) return `${Math.floor(size / 1000*1024)} M`;
+	if (size > 1024)      return `${Math.floor(size / 1024)} K`;
+	return `${size}`;
 }
 
 export function formatDescriptionHtml(track) {
@@ -49,3 +51,6 @@ export function formatDescriptionHtml(track) {
 	return track.artist || track.album || 'Unknown';
 }
 
+export function formatTags(tags, delimiter=',') {
+	return tags.split(delimiter).join(' • ');
+}

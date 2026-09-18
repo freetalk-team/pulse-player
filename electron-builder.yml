@@ -3,22 +3,32 @@ productName: Pulse Player
 directories:
   buildResources: build
 files:
+  - "out/**/*"
+  - "package.json"
   - '!**/.vscode/*'
-  - '!src/*'
+  - '!src/**'
+  - '!native/src/**'
+  - '!native/build/**/*.o'
+  - '!native/build/**/*.a'
   - '!electron.vite.config.{js,ts,mjs,cjs}'
   - '!svelte.config.mjs'
   - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
+extraResources:
+  - from: "resources/web"
+    to: "web"
+asar: true
 asarUnpack:
   - resources/**
 win:
   executableName: pulse-player
-  icon: pulse-player.ico
+  icon: icon.ico
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
+  include: installer.nsh
 mac:
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
@@ -34,12 +44,23 @@ linux:
     - AppImage
     # - snap
     # - deb
+  syncDesktopName: true
+  desktop:
+    entry:
+      Name: Pulse Player
+      Comment: Modern, lightweight media player
+      Categories: AudioVideo;Audio;Video;Network
+      Keywords: audio;video;player
+      StartupWMClass: pulse-player       # helps window managers match window to icon
+      Terminal: false
+      Type: Application
   executableName: pulse-player
-  maintainer: sipme.io
+  maintainer: Pavel Patarinski <pavel.patarinski@gmail.com>
+  vendor: Freetalk Team
   category: Audio
-  icon: pulse-player.png
+  icon: icon.png
   synopsis: Pulse Player
-  description: Play and manage your music
+  description: Play and organize your music
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false

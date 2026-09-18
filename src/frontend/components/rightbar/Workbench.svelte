@@ -5,11 +5,14 @@ import { flip } from 'svelte/animate';
 
 import { tooltip } from '../../actions';
 
-import { addTrackToPlaylist, activeEditPlaylist, activeEditPlaylistTracks } from '../../stores/playlist';
+import { activeEditPlaylist, activeEditPlaylistTracks } from '../../stores/selection';
+import { addTrackToPlaylist, updatePlaylistMetadata } from '../../stores/playlist';
 
 import Header from './WorkbenchHeader.svelte';
 import TrackItem from './TrackItem.svelte';
 import ListFlex from '../ui/ListFlex.svelte';
+
+const playlistTracks = activeEditPlaylistTracks.store;
 
 function handleDragOver(e) {
 
@@ -36,12 +39,9 @@ function handleDrop(e) {
 	if (trackData) {
 		// CASE 1: Adding new track from Main
 		const tracks = JSON.parse(trackData);
-		addTracks(tracks);
-	} 
-}
 
-function addTracks(tracks) {
-	addTrackToPlaylist(null, tracks);
+		addTrackToPlaylist(null, tracks);
+	} 
 }
 
 </script>
@@ -51,27 +51,24 @@ function addTracks(tracks) {
 	on:dragover={handleDragOver}
 	on:drop={handleDrop}
 	class="flex flex-col grow rounded-lg p-2 border-2 border-dashed 
-	{$activeEditPlaylistTracks.length === 0 ? 'border-pulse-accent/30 py-10' : 'border-transparent' } 
+	{$playlistTracks.length === 0 ? 'border-pulse-accent/30 py-10' : 'border-transparent' } 
 	transition-colors min-h-[200px]"
 >
-	<Header />
-	{#if $activeEditPlaylistTracks.length > 0}
+	<Header item={$activeEditPlaylist} onChange={updatePlaylistMetadata} />
 
+	{#if $playlistTracks.length > 0}
 		<ListFlex
-			items={activeEditPlaylistTracks}
+			ItemComponent={TrackItem}
+			items={playlistTracks}
 			reorder={true}
 			visibleItems={1000}
-			itemComponent={TrackItem}
 		>
-			<div slot="item_actions"
-				class="gap-1 flex items-center"
-				let:item let:index let:count let:move let:remove 
-			>
+			{#snippet itemActions(item, ctx)}
 				<button 
 					aria-label="Move up"
 					class="w-5 h-5 flex items-center justify-center hover:bg-white/10 rounded text-gray-500 hover:text-pulse-accent"
-					disabled={index === 0}
-					on:click|stopPropagation={() => move(index, -1)}
+					disabled={ctx.first()}
+					on:click={() => ctx.up()}
 					use:tooltip={"Up"}
 				>
 					<i class="fa-solid fa-chevron-up text-[9px]"></i>
@@ -81,8 +78,8 @@ function addTracks(tracks) {
 				<button 
 					aria-label="Move down"
 					class="w-5 h-5 flex items-center justify-center hover:bg-white/10 rounded text-gray-500 hover:text-pulse-accent"
-					disabled={index === count - 1}
-					on:click|stopPropagation={() => move(index, 1)}
+					disabled={ctx.last()}
+					on:click={() =>ctx.down()}
 					use:tooltip={"Down"}
 				>
 					<i class="fa-solid fa-chevron-down text-[9px]"></i>
@@ -90,12 +87,12 @@ function addTracks(tracks) {
 				<button 
 					aria-label="Remove"
 					class="text-red-500"
-					on:click|stopPropagation={() => remove(index)}
+					on:click={() => ctx.rm()}
 					use:tooltip={"Remove"}
 				>
 					<i class="fa-solid fa-remove text-[10px]"></i>
 				</button>
-			</div>
+			{/snippet}
 		</ListFlex>
 
 	{:else}

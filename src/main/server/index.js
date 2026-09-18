@@ -5,6 +5,8 @@ import websocket from '@fastify/websocket';
 import fastifyStatic from '@fastify/static';
 import cors from '@fastify/cors';
 
+import { app } from 'electron';
+
 import store from '../store';
 
 import websocketRoutes from './routes/ws';
@@ -15,15 +17,20 @@ import albumRoutes from './routes/album';
 import playlistRoutes from './routes/playlist';
 import collectionRoutes from './routes/collection';
 import postRoutes from './routes/post';
+import radioRoutes from './routes/radio';
 
 import mediaRoutes from './routes/media';
 
+const webRoot = app.isPackaged
+    ? path.join(process.resourcesPath, 'web')
+    : path.join(process.cwd(), 'resources', 'web');
+
 export async function createServer() {
-	const app = Fastify({
-		logger: true
+	const server = Fastify({
+		logger: !app.isPackaged
 	});
 
-	await app.register(cors, {
+	await server.register(cors, {
 		origin: true
 	});
 
@@ -34,47 +41,55 @@ export async function createServer() {
 	// });
 
 	// WebSocket support
-	await app.register(websocket);
+	await server.register(websocket);
 
-	await app.register(fastifyStatic, {
-		root: path.join(process.cwd(), 'src/web/dist'),
+	await server.register(fastifyStatic, {
+		root: webRoot,
 		prefix: '/'
 	});
 
-	app.setNotFoundHandler((req, reply) => {
+	server.setNotFoundHandler((req, reply) => {
 		reply.sendFile('index.html');
 	});
 
 	// Simple HTTP route
-	app.get('/api/ping', async () => {
+	server.get('/api/ping', async () => {
 		return {
 			ok: true,
 			time: Date.now()
 		};
 	});
 
-	await app.register(websocketRoutes, { prefix: '/ws' });
+	await server.register(websocketRoutes, { prefix: '/ws' });
 
 	await Promise.all([
-		app.register(tracksRoutes, { prefix: '/api/tracks' }),
-		app.register(albumRoutes, { prefix: '/api/album' }),
-		app.register(playlistRoutes, { prefix: '/api/playlist' }),
-		app.register(collectionRoutes, { prefix: '/api/collection' }),
-		app.register(libraryRoutes, { prefix: '/api/library' }),
-		app.register(postRoutes, { prefix: '/api/post' })
+		server.register(tracksRoutes, { prefix: '/api/tracks' }),
+		server.register(albumRoutes, { prefix: '/api/album' }),
+		server.register(playlistRoutes, { prefix: '/api/playlist' }),
+		server.register(collectionRoutes, { prefix: '/api/collection' }),
+		server.register(libraryRoutes, { prefix: '/api/library' }),
+		server.register(postRoutes, { prefix: '/api/post' }),
+		server.register(radioRoutes, { prefix: '/api/stations' })
 	]);
 	
-	await app.register(mediaRoutes);
+	await server.register(mediaRoutes);
 
 	const port = store.port;
 
-	// Start server
-	await app.listen({
-		host: '0.0.0.0',
-		port
-	});
+	try {
+		// Start server
+		await server.listen({
+			host: '0.0.0.0',
+			port
+		});
 
-	console.debug('[SERVER] started:', port);
+		const addresses = server.addresses();
 
-	return app;
+		console.log('[HTTP] started:', port, addresses.map(i => i.address));
+	}
+	catch (e) {
+		console.error('[HTTP] failed to start server:', e.message);
+	}
+
+	return server;
 }

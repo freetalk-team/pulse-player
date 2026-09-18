@@ -2,57 +2,28 @@
 const kDay = 24 * 60 * 60;
 const kLocalOffset = new Date().getTimezoneOffset() * 60;
 
-Date.prototype.toLocalDateString = function(locale='en-GB', opt={ weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' }) {
-	switch (locale) {
-		case 'bg': {
-
-			let s = '';
-
-
-			if (opt.weekday) {
-				const kWeekday = ['Неделя', 'Понеделник', 'Вторник', 'Сряда', 'Четвъртък', 'Петък', 'Събота'];
-				const i = this.getDay();
-
-				s += opt.weekday == 'short' ? (kWeekday[i].slice(3) + '.') : kWeekday[i]; 
-				s += ' ';
-			}
-
-			if (opt.day) {
-				s += this.getDate().toString();
-				s += ' ';
-			}
-
-			if (opt.month) {
-				if (options.month == 'numeric') {
-
-				} else {
-
-					const kMonth = ['Януари', 'Февруари', 'Март', 'Април', 'Май', 'Юни', 'Юли', 'Август', 'Септември', 'Октомври', 'Ноември', 'Декември' ];
-
-					const i = this.getMonth();
-					const month = kMonth[i];
-
-					s += opt.month == 'short' && month.length > 4 ? (month.slice(0, 3) + '.') : month;
-					s += ' ';
-				}
-			}
-
-			return s.trimEnd();
-
-		}
-		break;
-
-		default:
-		return this.toLocaleDateString(locale, opt);
-	}
+Date.prototype.toLocalDateString = function(locale='en-US', opt) {
+	opt = opt || { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
+	return this.toLocaleDateString(locale, opt);
 }
 
-Date.prototype.toLocalDateStringShort = function(locale='en-GB', opt={ weekday: 'long', month: 'short', day: 'numeric' }) {
-	return this.toLocalDateString(locale, opt);
+Date.prototype.toLocalDateStringShort = function(locale='en-US') {
+	const opt={ weekday: 'short', month: 'short', day: 'numeric' }
+	return this.toLocaleDateString(locale, opt);
 }
 
 Date.prototype.toDateTimeString = function() {
 	return this.toISOString().slice(0, 19).replace('T', ' ');
+}
+
+Date.prototype.toDateTimeInt = function() {
+    return (
+        String(this.getFullYear()).slice(-2) +
+        String(this.getMonth() + 1).padStart(2, '0') +
+        String(this.getDate()).padStart(2, '0') +
+        String(this.getHours()).padStart(2, '0') +
+        String(this.getMinutes()).padStart(2, '0')
+    );
 }
 
 Date.prototype.seconds = function() {
@@ -122,6 +93,13 @@ Date.prototype.offsetFrom = function(ts=Date.now(), suffix='') {
 		t += ' ' + suffix;
 
 	return t;
+}
+
+
+// STATIC
+Date.nowDTI = function() {
+	const d = new Date;
+	return d.toDateTimeInt();
 }
 
 Date.timeElapsed = function(ts, from=Date.now()) {
@@ -229,7 +207,8 @@ Date.timeout = function(sec) {
 }
 
 Date.isToday = function(d) {
-	if (typeof d == 'string')
+
+	if (!(d instanceof Date))
 		d = new Date(d);
 
 	return d.toDateString() === new Date().toDateString();

@@ -1,259 +1,104 @@
 import { writable, get } from 'svelte/store';
 
-import { sleep } from '../utils/sleep';
-
+import { confirmAction } from './ui';
 import { searchQuery, activeOrder } from './selection';
 import { selectedAlbum, selectedFilter, selectedPlaylist } from './player';
-import { currentTrack, recent } from './play';
+import { currentTrack, updateTrack as updatePlayTrack } from './play';
+import { audioCount, videoCount } from './library';
+import { fetchCall, LIMIT } from './fetch';
 
 export const tracks = writable([]);
 export const editTrack = writable(null);
 
-export const audioCount = writable(0);
-export const videoCount = writable(0);
-
-export const isImporting = writable(false);
-export const importProgress = writable(0);
-
 export const isLoading = writable(false);
 export const hasMore = writable(false);
 
-let offset = 0;
-let lastRequestId = 0; // 👈 Track the latest request
-let filter;
-let sort;
-let search;
-let searchTimeout;
-let fetching = false;
-let playlist;
-let album;
-
-const LIMIT = 30;
-const LOADING_TIMEOUT = 600;
-
-const ImportFilters = ['all', 'audio', 'video'];
-const Filters = ['all', 'audio', 'video', 'playlist', 'album'];
+export const fetch = fetchCall(api.queryTracks, tracks, isLoading, hasMore, buildQuery);
 
 const updateQueue = [];
 
-api.on('import-start', () => {
-	console.log('Import started');
+let activeRequest;
 
-	if (ImportFilters.includes(filter))
-		activeOrder.set('created');
+currentTrack.subscribe(current => {
+	if (updateQueue.length > 0) {
+		const { track, opt } = updateQueue[0];
 
-	isImporting.set(true);
-});
+		console.debug('Update queue', track.id);
 
-api.on('import-end', () => {
-	console.log('Import ended');
-	isImporting.set(false);
-	importProgress.set(0);
-});
+		if (current?.id !== track.id) {
+			api.updateTrack(track, opt);
 
-api.on('import-progress', ({ file, progress }) => {
-	// console.log('Import progress:', progress, file.title);
-
-	if (!file.existing) {
-
-		const count = file.type == 'audio' ? audioCount : videoCount;
-
-		if (filter == 'all' || file.type == filter) {
-
-			const items = get(tracks);
-			
-			const limit = offset + LIMIT;
-			const newItems = addTrack(items, file, limit);
-
-			if (newItems) {
-				const more = newItems.length >= limit;
-
-				// console.log('Adding track:', file, more);
-
-				tracks.set(newItems);
-				hasMore.set(more);
-			}
+			updateQueue.shift();
 		}
-		
-		count.update(n => n + 1);
 	}
-
-	importProgress.set(progress);
 });
 
-export function initTracks(audio, video) {
+api.on('import-progress', (progress) => {
+	console.debug('Event import progress:', progress);
+	if (!activeRequest) return;
+	addTracks(progress.tracks);
+});
 
-	audioCount.set(audio);
-	videoCount.set(video);
+api.on('track:added', track => {
+	if (!activeRequest) return;
+	addTracks([track]);
+});
 
-	selectedPlaylist.subscribe(v => {
-		playlist = v;
+function addTracks(newTracks) {
 
-		if (!filter) return;
-		if (!playlist) return;
+	const { query, sort, filter, playlist } = activeRequest;
 
-		reset();
-		fetch();
-	});
+	const filtered = newTracks.filter(t => 
+		(filter == 'all' || filter == t.type) &&
+		playlist == t.playlist &&
+		matchQuery(query, t)
+	);
 
-	selectedAlbum.subscribe(v => {
-		album = v;
+	tracks.update(v => merge(v));
 
-		if (!filter) return;
-		if (!album) return;
+	function merge(tracks) {
 
-		reset();
-		fetch();
-	});
+		let limit = LIMIT - (tracks.length % LIMIT);
+		let max = tracks.length + limit;
 
-	activeOrder.subscribe(v => {
-		if (!filter) return;
-
-		sort = v;
-
-		reset();
-		fetch();
-	});
-
-	searchQuery.subscribe(v => {
-		if (!filter) return;
-
-		search = v;
-
-		clearTimeout(searchTimeout);
-
-		searchTimeout = setTimeout(() => {
-			reset();
-			fetch();
-		}, 300);
-	});
-
-	selectedFilter.subscribe(v => {
-
-		if (Filters.includes(v)) {
-			filter = v;
-
-			reset();
-			fetch();
+		if (tracks.length > 0 && limit == LIMIT) {
+			limit = 0;
+			max = tracks.length;
 		}
+
+		console.debug(`Merging tracks: max=${max}, limit=${limit}, sort=${sort}, tracks=${tracks.length}, added=${newTracks.length}`);
+
+		if (sort == 'created') {
+			newTracks.push(...tracks);
+			tracks = newTracks.slice(0, max);
+		}
+		// else if (sort == 'rating') {
+		// 	const pos = tracks.findIndex(i => );
+		// }
 		else {
-			filter = null;
+			tracks.push(...newTracks.slice(0, limit));
 		}
+
+		activeRequest.offset = tracks.length;
 		
-	});
-
-	currentTrack.subscribe(track => {
-		if (updateQueue.length > 0) {
-			const t = updateQueue[0];
-
-			console.debug('Update queue', t.id, track);
-
-			if (t.id !== track?.id) {
-				api.updateTrack(t, {
-					fetchMeta: false, 
-					updateDb: false,
-					updateFile: true,
-					coverPicture: true // todo: check prefs
-				});
-
-				updateQueue.shift();
-			}
-		}
-	});
-}
-
-
-function reset() {
-	offset = 0;
-	fetching = false;
-
-	tracks.set([]);
-	hasMore.set(true);
-
-	// console.log('Reseting ...');
-}
-
-export async function fetch() {
-
-	if (fetching) return;
-
-	fetching = true;
-
-	// 1. Generate a unique ID for this specific fetch call
-	const requestId = ++lastRequestId;
-	const query = getQuery();
-
-2
-	isLoading.set(true);
-
-	// console.trace('Fetchig tracks ...');
-
-	try {
-		const [newItems] = await Promise.all([
-			album ? api.getAlbumTracks(album.id) : api.getTracks(query),
-			sleep(LOADING_TIMEOUT) 
-		]);
-
-		console.debug('Tracks:', newItems);
-
-		// 2. THE FIX: If a newer request has started, discard this one!
-		if (requestId !== lastRequestId) {
-			// console.log('🚫 Discarding stale search result');
-			return; 
-		}
-
-		if (newItems.length < LIMIT) 
-			hasMore.set(false);
+		hasMore.set(tracks.length % LIMIT == 0);
 		
-		// ✅ REASSIGN for reactivity
-		tracks.update(items => [...items, ...newItems])
-
-		offset += LIMIT;
-
-	} finally {
-		// 3. Only stop loading if this is still the active request
-		if (requestId === lastRequestId) {
-			isLoading.set(false);
-		}
-
-		fetching = false;
-
-		// console.log('Fetching done');
+		return tracks;
 	}
 
-}
+	function matchQuery(track) {
+		if (!query) return true;
 
-function getQuery() { 
-	return { 
-		query: search, 
-		filter, 
-		sort, 
-		offset, 
-		limit: LIMIT, 
-		playlistId: playlist?.id 
-	};
-}
+		const q = query.toLowerCase();
+		const match = (m) => m && m.toLowerCase().search(q) != -1;
 
-function addTrack(items, track, limit) {
-
-
-	if (sort == 'created') {
-
-		items.unshift(track);
-
-		if (items.length > limit)
-			items.splice(limit - 1, 1);
-
-		return items;
+		return match(track.title) || match(track.artist) || match(track.album);
 	}
+}
 
-	if (items.length >= limit)
-		return null;
-
-	
-	items.push(track);
-
-	return items;
+export function setTracks(newTracks) {
+	tracks.set(newTracks.slice(0, LIMIT));
+	hasMore.set(newTracks.length >= LIMIT);
 }
 
 export async function updateTrack(track, fetchMeta=true, updateFile=true) {
@@ -261,7 +106,7 @@ export async function updateTrack(track, fetchMeta=true, updateFile=true) {
 	console.debug('Updating track:', track, fetchMeta, updateFile);
 
 	track.title = track.title.trim();
-	track.artist = track.artist.trim();
+	track.artist = track.artist?.trim();
 
 	let addToQueue = false;
 
@@ -273,13 +118,6 @@ export async function updateTrack(track, fetchMeta=true, updateFile=true) {
 		addToQueue = true;
 	}
 
-	track = await api.updateTrack(track, {
-		fetchMeta, 
-		updateFile, 
-		updateDb: true,
-		coverPicture: true // todo: check prefs
-	});
-
 	if (isCurrent) {
 		currentTrack.set(track);
 		editTrack.set(null);
@@ -289,10 +127,80 @@ export async function updateTrack(track, fetchMeta=true, updateFile=true) {
 	}
 
 	tracks.update(list => list.map(i => i.id == track.id ? track : i));
-	recent.update(list => list.map(i => i.id == track.id ? track : i));
 
-	if (addToQueue)
-		updateQueue.push(track);
+	updatePlayTrack(track);
+
+	const opt = { updateFile };
+
+	if (addToQueue) {
+		updateQueue.push({ track, opt });
+	}
+	else {
+		await api.updateTrack(track, opt);
+	}
+}
+
+export async function removeTrack(track) {
+	const confirmed = await confirmAction({
+		title: 'Delete track?',
+		message: `This will remove "${track.title}".`,
+		confirmText: 'Delete',
+		danger: true,
+		options: __PLATFORM__ === 'desktop'
+			? { remove: { checked: false, label: 'Permanently remove file', accent: 'red' } }
+			: null
+	});
+
+	if (confirmed) {
+
+		try {
+
+			await api.removeTrack(track.id, confirmed.remove?.checked);
+
+			if (get(editTrack)?.id == track.id)
+				editTrack.set(null);
+
+			if (track.type == 'video') videoCount.update(n => n - 1);
+			else audioCount.update(n => n - 1);
+
+			tracks.update(list => list.filter(i => i.id != track.id));
+		}
+		catch (e) {
+			console.error('Failed to remove track:', e.message);
+			report.error('Failed to remove track!');
+		}
+			
+	}
+
+
+}
+
+export async function fetchTrackMeta(track) {
+	return api.fetchTrackMeta({
+		id: track.id,
+		title: track.title,
+		artist: track.artist
+	});
+}
+
+function buildQuery(params, lastRequest) { 
+	
+	params.query = params.query ?? get(searchQuery);
+	params.sort = params.sort ?? get(activeOrder);
+	params.filter = params.filter ?? get(selectedFilter);
+
+	const changed = params.query != lastRequest.query ||
+		params.filter != lastRequest.filter ||
+		params.sort != lastRequest.sort ||
+		params.playlist != lastRequest.playlist;
+
+	//console.debug('Query:', changed, params, lastRequest);
+
+	Object.assign(lastRequest, params);
+
+	activeRequest = lastRequest;
+
+	return changed;
 }
 
 function subscribeSkipInitial(store, callback) {

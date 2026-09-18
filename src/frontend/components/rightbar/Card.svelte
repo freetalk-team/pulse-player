@@ -1,58 +1,58 @@
 <script>
 
 import { tooltip } from "../../actions";
-import { sleep } from "../../utils/sleep";
+import { editTrack } from "../../stores/tracks";
 
-import { editTrack, updateTrack } from "../../stores/tracks";
+let { track } = $props();
 
-import Loading from "../main/Loading.svelte";
+let thumbPath = $state(null);
 
-export let track;
+if (__PLATFORM__ === 'web') {
+	$effect(() => {
+		const id = track?.cover;
 
-let loading = false;
+		if (!id) {
+			thumbPath = null;
+			return;
+		}
 
-async function update() {
+		let cancelled = false;
 
-	loading = true;
+		platform.getThumb(id).then((url) => {
+			if (cancelled) {
+				if (url) {
+					platform.releaseThumb(id);
+				}
+				return;
+			}
 
-	await Promise.all([
-		updateTrack(track, true, false),
-		sleep(600)
-	]);
+			thumbPath = url;
+		});
 
-	loading = false;
+		return () => {
+			cancelled = true;
+			platform.releaseThumb(id);
+			thumbPath = null;
+		};
+	});
+} else {
+	$effect(() => {
+		thumbPath = track?.thumb_path ?? null;
+	});
 }
 
-
 </script>
-
-{#if loading}
-
-<div class="py-6">
-	<Loading text={"Updating"} />
-</div>
-
-{:else}
 
 <div class="mb-8 mt-4 group pl-2">
 	<div class="flex items-center mb-4">
 		<h3 class="flex-grow text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] truncate">Now Playing</h3>
 
-		{#if !platform.remote}
+		{#if __PLATFORM__ === 'desktop' && !track.remote}
 			<div class="flex items-center gap-2">
-				{#if track.artist}
-					<button 
-						aria-label="Quick fetch"
-						on:click={update}
-						use:tooltip={"Quick Fetch"}
-						class="flex items-center justify-center bg-white/5 hover:bg-pulse-accent/20 text-gray-400 hover:text-pulse-accent rounded-full transition-all"
-					>
-						<i class="fa-solid fa-bolt text-xs"></i>
-					</button>
-				{/if}
+				
 				<button 
 					aria-label="Edit"
-					on:click={() => editTrack.set(track)}
+					onclick={() => editTrack.set(track)}
 					use:tooltip={"Edit"}
 					class="flex items-center justify-center bg-white/5 hover:bg-orange-500/20 text-gray-400 hover:text-orange-500 rounded-full transition-all"
 				>
@@ -66,17 +66,17 @@ async function update() {
 			Generic Tags
 		</div>
 	{/if} -->
-	{#if track.thumb_path}
+	{#if thumbPath}
 		<div class="relative aspect-square rounded-xl overflow-hidden shadow-2xl mb-4 border border-white/10">
 			<img 
-				src="{platform.resolve(track.thumb_path)}" 
+				src="{platform.resolve(thumbPath)}" 
 				class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
 				alt="" 
 			/>
 			<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
 		</div>
 	{/if}
-	<h4 class="text-lg font-bold text-white leading-tight">{track.title}</h4>
+	<h4 class="text-lg font-bold text-white leading-tight line-clamp-3">{track.title}</h4>
 	<p class="text-sm text-gray-400">{track.artist}</p>
 	{#if track.genre}
 		<span class="text-[9px] text-pulse-accent/70 uppercase tracking-tighter">
@@ -85,4 +85,3 @@ async function update() {
 	{/if}
 </div>
 
-{/if}

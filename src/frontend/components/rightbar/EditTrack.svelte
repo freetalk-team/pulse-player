@@ -3,16 +3,17 @@
 import { fade } from "svelte/transition";
 
 import { sleep } from "../../utils/sleep";
-import { editTrack, updateTrack } from "../../stores/tracks";
+import { editTrack, updateTrack, fetchTrackMeta } from "../../stores/tracks";
+import { runPremiumAction } from "../PremiumLockModal.svelte";
 
 import ToggleOption from "./ToggleOption.svelte";
-import GenreSelect from "../ui/GenreSelect.svelte";
+import GenreSelect from "../ui/controls/GenreSelect.svelte";
 import Loading from "../main/Loading.svelte";
 
 export let track;
 
-let fetchMeta = true;
-let updateFile = true;
+// let fetchMeta = true;
+let updateFile = false;
 let loading = false;
 
 async function update() {
@@ -20,11 +21,31 @@ async function update() {
 	loading = true;
 
 	await Promise.all([
-		updateTrack(track, fetchMeta, updateFile),
+		updateTrack(track, false, updateFile),
 		sleep(600)
 	]);
 
 	loading = false;
+}
+
+async function fetchMeta() {
+	if (!runPremiumAction('TAG_METADATA')) return;
+
+	loading = true;
+
+	const meta = await fetchTrackMeta(track);
+
+	if (meta) {
+		track = { ...track, ...meta };
+	}
+
+	loading = false;
+}
+
+function checkUpdateMeta() {
+	if (updateFile && !runPremiumAction('TAG_METADATA')) {
+		updateFile = false;
+	}
 }
 
 function getFilename(path) {
@@ -88,7 +109,22 @@ function getFilename(path) {
 			spellcheck="false"
 		/>
 	</div>
-
+	<button 
+		on:click={fetchMeta}
+		class="self-start mt-3 icon-text-button pulse text-[12px]"
+	>
+		<i class="fa-regular fa-circle-down"></i>
+		Fetch meta
+	</button>
+	<div class="flex flex-col gap-2">
+		<label class="text-[9px] text-gray-500 uppercase">Album</label>
+		<input 
+			bind:value={track.album}
+			class="input"
+			placeholder="Album..."
+			spellcheck="false"
+		/>
+	</div>
 	<div class="flex flex-col gap-2">
 		<label class="text-[9px] text-gray-500 uppercase">Genre</label>
 		<GenreSelect 
@@ -107,8 +143,8 @@ function getFilename(path) {
 	</div>
 
 	<div class="flex flex-col gap-2">
-		<ToggleOption title={"Fetch meta"} bind:enabled={fetchMeta} />
-		<ToggleOption title={"Update file meta"} bind:enabled={updateFile} />
+		<!-- <ToggleOption title={"Fetch meta"} bind:enabled={fetchMeta} /> -->
+		<ToggleOption title={"Update file meta"} bind:enabled={updateFile} onToggle={checkUpdateMeta} />
 		<button 
 			on:click={update}
 			class="self-start mt-3 icon-text-button pulse text-[12px]"
@@ -126,7 +162,7 @@ function getFilename(path) {
 @reference "../../assets/main.css";
 
 .input {
-	@apply bg-transparent border-none outline-none text-sm font-bold text-white placeholder:text-gray-700 w-full truncate focus:text-pulse-accent transition-colors;
+	@apply bg-transparent border-none outline-none text-sm font-bold placeholder:text-gray-700 w-full truncate focus:text-pulse-accent transition-colors;
 }
 
 .thumb {

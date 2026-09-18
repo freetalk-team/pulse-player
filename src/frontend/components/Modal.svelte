@@ -1,19 +1,23 @@
-<!-- components/ui/Modal.svelte -->
 <script>
-	import { createEventDispatcher } from 'svelte';
-	import { fade, scale } from 'svelte/transition';
-	import { backOut } from 'svelte/easing';
 
-	export let title = "Are you sure?";
-	export let message = "";
-	export let confirmText = "Confirm";
-	export let cancelText = "Cancel";
-	export let danger = false;
+import { createEventDispatcher } from 'svelte';
+import { fade, scale } from 'svelte/transition';
+import { backOut } from 'svelte/easing';
 
-	const dispatch = createEventDispatcher();
+import Checkbox from './ui/controls/Checkbox.svelte';
 
-	const close = () => dispatch('close');
-	const confirm = () => dispatch('confirm');
+export let title = "Are you sure?";
+export let message = "";
+export let confirmText = "Confirm";
+export let cancelText = "Cancel";
+export let danger = false;
+export let options;
+
+const dispatch = createEventDispatcher();
+
+const close = () => dispatch('close');
+const confirm = () => dispatch('confirm');
+
 </script>
 
 <!-- Backdrop -->
@@ -34,6 +38,14 @@
 			
 			<h2 class="text-lg font-bold text-white mb-2">{title}</h2>
 			<p class="text-sm text-gray-400 leading-relaxed">{message}</p>
+
+			{#if options}
+				<div class="mt-3">
+					{#each Object.values(options) as opt}
+						<Checkbox bind:checked={opt.checked} label={opt.label} accent={opt.accent || 'pulse'} />
+					{/each}
+				</div>
+			{/if}
 		</div>
 
 		<div class="flex border-t border-white/5 h-14">

@@ -1,26 +1,20 @@
 import { EventEmitter } from 'node:events';
 
-import db from './db';
-import { broadcast } from './server/clients';
+import remote from './services/remote';
 
 export const events = new EventEmitter();
 
 export function setupEventHandlers(handler) {
+	events.on('comment:added',  comment  => handler('comment:added', comment));
+	events.on('reaction:added', reaction => handler('reaction:added', reaction));
+	events.on('post:create',    post     => handler('post:create', post));
+	events.on('remote:closed',  remoteId => handler('remote:closed', remoteId));
 
-	events.on('comment:add', comment => {
+	events.on('recording:started', station => handler('recording:started', station));
+	events.on('recording:ended',   station => handler('recording:ended', station));
 
-		console.debug('[EVENT] comment add:', comment);
+	events.on('track:added',    track    => handler('track:added', track));
+	events.on('playlist:added', playlist => handler('playlist:added', playlist));
 
-		const { content, post_id, user_id, parent_comment_id } = comment;
-
-		const res = db.addComment(content, post_id, parent_comment_id, user_id);
-
-		Object.assign(comment, res);
-
-		handler('comment:added', comment);
-		broadcast('home', 'comment:added', comment);
-	});
-
-	events.on('comment:added', comment => handler('comment:added', comment));
-	events.on('post:create', post => handler('post:create', post));
+	events.on('error', msg => handler('error', msg));
 }

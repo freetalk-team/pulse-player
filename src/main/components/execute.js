@@ -1,108 +1,120 @@
 import vm from 'node:vm';
 
-import db from '../db';
+function createApi(cache) {
+	return {
+		http: Object.freeze({
+			get: async (url, params = {}, headers = []) => {
 
-const api = {
-	http: Object.freeze({
-	  	get: async (url, params = {}, headers = []) => {
+				const qp = new URLSearchParams();
 
-			const qp = new URLSearchParams();
+				for (const [key, value] of Object.entries(params))
+					qp.set(key, typeof value == 'string' ? value.toLowerCase() : value);
 
-			for (const [key, value] of Object.entries(params))
-				qp.set(key, typeof value == 'string' ? value.toLowerCase() : value);
+				// const url = (path.startsWith('http')
+				// 	? path 
+				// 	: config.baseUrl + path)
+				// 	+ qp.toString();
 
-			// const url = (path.startsWith('http')
-			// 	? path 
-			// 	: config.baseUrl + path)
-			// 	+ qp.toString();
+				const fullUrl = qp.size > 0
+					? url + '?' + qp.toString()
+					: url;
 
-			const fullUrl = qp.size > 0
-				? url + '?' + qp.toString()
-				: url;
+				console.debug('CACHE:', cache);
+				console.debug('[HTTP] GET:', fullUrl);
+				
+				try {
 
-			console.debug('Http GET:', fullUrl);
+					const id = fullUrl.hashCode();
+					const response = cache.getResponse(id);
 
-			const id = fullUrl.hashHex();
+					if (response) {
+						console.debug('Response found in database:', id);
+						return JSON.parse(response);
+					}
 
-			let res;
+					const res = await fetch(fullUrl, { headers });
 
-			res = db.get(id, 'requests');
+					if (res.ok) {
 
-			if (res?.response) {
-				console.debug('Response found in database:', id);
-				return JSON.parse(res.response);
-			}
-			
-			try {
+						const response = await res.text();
 
-				res = await fetch(fullUrl, { headers });
+						console.debug('[HTTP] response:', response);
 
-				if (res.ok) {
+						cache.insertResponse(id, response);
 
-					const response = await res.text();
-
-					db.insert({ id, response }, 'requests');
-
-					return JSON.parse(response);
+						return JSON.parse(response);
+					}
+					else {
+						console.debug('[HTTP] no response');
+					}
 				}
-			}
-			catch (e) {
-				console.error('🚨 Failed to send http GET:', e);
-			}
+				catch (e) {
+					console.error('🚨 Failed to send http GET:', e);
+				}
 
-	  	}
-	}),
+			}
+		}),
 
-	log: (...args) => console.log('[component]', ...args)
+		log: (...args) => console.log('[component]', ...args)
+	};
 }
 
-export function run(component, params) {
-	
+export function run(component, cache, params) {
 
 	return component.builtin
-		? runBuiltinComponent(component, params)
-		: runUserComponent(component, params);
+		? runBuiltinComponent(component, cache, params)
+		: runUserComponent(component, cache, params);
+}
 
-	async function runBuiltinComponent(component, params) {
+async function runBuiltinComponent(component, cache, params) {
 
-		if (!component.run) {
+	const api = createApi(cache);
 
-			component.run = new Function(...Object.keys(api), 'config', ...Object.keys(params),
-				`
-				return (async () => {
-					${component.code}
-				})();
-				`
-			);
-		}
+	if (!component.run) {
 
-		return component.run(...Object.values(api), component.config, ...Object.values(params));
-	}
-
-	function compileUserCode(component, params) {
-
-		return new vm.Script(`
-			(async (config, params) => {
-				const { ${Object.keys(params).join(', ')} } = params;
-
+		component.run = new Function(
+			...Object.keys(api), 
+			'config', 
+			...Object.keys(params),
+			`
+			return (async () => {
 				${component.code}
-			})
-		`);
+			})();
+			`
+		);
 	}
 
+	return component.run(
+		...Object.values(api), 
+		component.config, 
+		...Object.values(params)
+	);
+}
 
-	async function runUserComponent(component, params) {
+function compileUserCode(component, params) {
 
-		if (!component.run) {
+	return new vm.Script(`
+		(async (config, params) => {
+			const { ${Object.keys(params).join(', ')} } = params;
 
-			const script = compileUserCode(component, params);
-			const context = vm.createContext({...api});
+			${component.code}
+		})
+	`);
+}
 
-			component.run = script.runInContext(context, { timeout: component.timeout || 5000 });
 
-		}
+async function runUserComponent(component, cache, params) {
 
-		return component.run(component.config, params);
+	if (!component.run) {
+
+		const api = createApi(cache);
+
+		const script = compileUserCode(component, params);
+		const context = vm.createContext(api);
+
+		component.run = script.runInContext(context, { timeout: component.timeout || 5000 });
+
 	}
 
+	return component.run(component.config, params);
 }

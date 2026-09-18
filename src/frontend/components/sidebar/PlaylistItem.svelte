@@ -1,10 +1,11 @@
 <script>
 
+import { icon } from '../ui/icons';
+
 import Stat from './Stat.svelte';
 import Rating from './Rating.svelte';
 
 export let item;
-export let index;
 
 export let isSelected = false;
 export let isDragOver = false;
@@ -12,6 +13,7 @@ export let isDropAllowed = true;
 export let isDropped = false;
 export let isRenaming = false;
 export let onRename;
+export let actions;
 
 let editName = item.name;
 
@@ -52,8 +54,8 @@ function handleKey(e) {
 	<!-- TOP ROW -->
 	<div class="flex items-center justify-between mb-1">
 		<div class="flex flex-grow w-full items-center gap-3 rounded cursor-pointer">
-			<div class="flex justify-center items-center w-12 h-12 rounded flex-shrink-0 bg-gradient-to-br from-white/5 to-transparent">
-				<i class="fa-solid {item.icon || 'fa-music'} text-[20px] {item.icon_color || 'text-pulse-accent'}"></i>
+			<div class="flex justify-center items-center w-12 h-12 text-[20px] rounded flex-shrink-0 bg-gradient-to-br from-white/5 to-transparent">
+				{@html icon(item.icon)}
 			</div>
 
 			<div class="flex-grow flex-column truncate">
@@ -84,11 +86,11 @@ function handleKey(e) {
 							<div class="flex items-center justify-end gap-2 h-5">
 								
 								<div class="hidden group-hover/item:flex items-center gap-2 pr-1 h-full transition-all" on:click|stopPropagation>
-									<slot name="actions" />
+									{@render actions?.(item)}
 								</div>
 								<!-- TRACK COUNT (Hidden on hover) -->
 								<div class="group-hover/item:hidden transition-all hidden @[200px]:block">
-									<Stat item={item}/>
+									<Stat duration={item.total_duration} count={item.track_count} />
 								</div>
 							</div>
 						{/if}

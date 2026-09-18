@@ -1,36 +1,23 @@
 
-import db from '../../db'
-
-import { normalizePaths, normalizeCoverPaths } from './common'
+import lib from '../../services/library';
 
 export default async function routes(app) {
 
-	app.get('/', async (req, reply) => {
+	// app.get('/', async (req, reply) => {
 
-		// console.debug('Get tracks:', req.query);
+	// 	const query = req.query;
 
-		// const base = `${req.protocol}://${req.headers.host}`;
+	// 	query.limit = query.limit ? parseInt(query.limit) : 50;
+	// 	query.offset = query.offset ? parseInt(query.offset) : 0;
 
-		const { filter, query, sort, offset, limit } = req.query;
-		const albums = db.getCollections('album', query, sort, offset, limit);
+	// 	const albums = db.library.queryCollections('albums', query);
 
-		//console.debug('Tracks', tracks);
-
-		return normalizeCoverPaths(albums);
-	});
+	// 	return normalizeCoverPaths(albums);
+	// });
 
 	app.get('/:id/tracks', async (req, reply) => {
-
-		let { offset, limit } = req.query;
-		let { id } = req.params;
-
-		id = parseInt(id);
-		offset = offset ? parseInt(offset) : 0;
-		limit = limit ? parseInt(limit) : 200;
-
-		const tracks = db.getAlbumTracks(id, offset, limit);
-
-		return normalizePaths(tracks);
+		const id = parseInt(req.params.id);
+		return lib.getAlbumTracks(id, true);
 	});
 	
 }

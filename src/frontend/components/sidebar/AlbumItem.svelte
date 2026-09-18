@@ -1,14 +1,51 @@
 <script>
 
+import { stopPropagation } from '../../actions';
+
 import Stat from './Stat.svelte';
 import Rating from './Rating.svelte';
 
-export let item;
-export let index;
+let {
+	item,
+	isSelected,
+	actions
+} = $props();
 
-export let isSelected = false;
+let coverPath = $state(null);
 
-const genre = item.genre ?? 'Unknown';
+if (__PLATFORM__ === 'web') {
+	$effect(() => {
+		const id = item?.cover;
+
+		if (!id) {
+			coverPath = null;
+			return;
+		}
+
+		let cancelled = false;
+
+		platform.getThumb(id).then((url) => {
+			if (cancelled) {
+				if (url) {
+					platform.releaseThumb(id);
+				}
+				return;
+			}
+
+			coverPath = url;
+		});
+
+		return () => {
+			cancelled = true;
+			platform.releaseThumb(id);
+			coverPath = null;
+		};
+	});
+} else {
+	$effect(() => {
+		coverPath = item?.cover_path ?? null;
+	});
+}
 
 </script>
 
@@ -19,8 +56,8 @@ const genre = item.genre ?? 'Unknown';
 >
 	<!-- Use the 'img://' protocol we created -->
 	<div class="w-10 h-10 bg-pulse-main rounded shadow-lg overflow-hidden flex-shrink-0">
-	{#if item.cover_path}
-		<img src="{platform.resolve(item.cover_path)}" alt="" class="w-full h-full object-cover" />
+	{#if coverPath}
+		<img src="{platform.resolve(coverPath)}" alt="" class="w-full h-full object-cover" />
 	{:else}
 		<div class="w-full h-full flex items-center justify-center text-gray-700">
 			<i class="fa-solid fa-record-vinyl fa-2x"></i>
@@ -37,13 +74,13 @@ const genre = item.genre ?? 'Unknown';
 			</h4>
 			<div
 				class="hidden group-hover/item:flex items-center gap-2 pr-1 h-full transition-all"
-				on:click|stopPropagation
+				onclick={stopPropagation}
 			>
-				<slot name="actions" />
+				{@render actions?.(item)}
 			</div>
 
 			<div class="group-hover/item:hidden hidden @[200px]:block">
-				<Stat item={item} />
+				<Stat duration={item.total_duration} count={item.track_count} />
 			</div>
 		</div>
 		<div class="flex justify-between items-center mt-0.5 h-5">
@@ -57,7 +94,7 @@ const genre = item.genre ?? 'Unknown';
 		<!-- Added Genre Badge -->
 		<div class="flex items-center justify-between">
 			<span class="text-[9px] text-pulse-accent/70 uppercase tracking-tighter">
-				{genre}
+				{item.genre ?? 'Unknown'}
 			</span>
 			{#if item.total_rating > 0}
 				<Rating rating={item.total_rating} />

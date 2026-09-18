@@ -1,10 +1,10 @@
 import { basename } from 'node:path';
 
-import db from '../../db'
+// import lib from '../../services/library';
 
 export default async function libraryRoutes(app) {
 
-	app.get('/', (req, reply) => db.getLibraryStat());
+	app.get('/', (req, reply) => lib.getStat());
 
 	app.get('/album', (req, reply) => {
 
@@ -12,7 +12,7 @@ export default async function libraryRoutes(app) {
 
 		limit = limit ? parseInt(limit) : 16;
 
-		const albums = db.getTop('album', limit);
+		const albums = db.library.getTop('albums', limit);
 
 		for (const i of albums) {
 			if (i.cover_path) {

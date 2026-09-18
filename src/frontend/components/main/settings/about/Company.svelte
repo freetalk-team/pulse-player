@@ -1,7 +1,9 @@
 <script>
-	import { isElectron } from "../../../../utils/env"
+
+import Link from '../../../ui/Link.svelte';
 
 </script>
+
 <section class="mb-10">
 	<h2 class="text-xl font-semibold text-pulse-white mb-4 flex items-center gap-2">
 		<i class="fa-solid fa-building text-purple-400"></i>
@@ -31,20 +33,16 @@
 		<h3 class="text-sm font-medium text-gray-400 mb-3">Team Members</h3>
 		<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
 			<div class="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-md">
-			<i class="fa-solid fa-user text-gray-400 text-xs"></i>
-			<strong>Pavel Patarinski</strong> - <i>Software Engineer</i>
+				<i class="fa-solid fa-user text-gray-400 text-xs"></i>
+				<strong>Pavel Patarinski</strong> - <i>Software Engineer</i>
 			</div>
 			<div class="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-md">
-			<i class="fa-solid fa-user text-gray-400 text-xs"></i>
-			<strong>Srebrina Zlateva</strong> - <i>Project Manager</i>
+				<i class="fa-solid fa-user text-gray-400 text-xs"></i>
+				<strong>Srebrina Zlateva</strong> - <i>Project Manager</i>
 			</div>
 			<div class="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-md">
-			<i class="fa-solid fa-user text-gray-400 text-xs"></i>
-			<strong>Preslav Petrov</strong> - <i>QA</i>
-			</div>
-			<div class="flex items-center gap-2 bg-white/5 px-3 py-2 rounded-md">
-			<i class="fa-solid fa-dog text-gray-400 text-xs"></i>
-			<strong>Raya</strong> - <i>The dog</i>
+				<i class="fa-solid fa-dog text-gray-400 text-xs"></i>
+				<strong>Raya</strong> - <i>The dog</i>
 			</div>
 		</div>
 	</div>
@@ -79,19 +77,13 @@
 		<h3 class="text-sm font-medium text-gray-400 mb-3">Website</h3>
 		<div class="space-y-2 text-sm">
 			<div class="flex items-center gap-2">
-			<i class="fa-solid fa-earth-americas text-gray-400 text-xs"></i>
-			{#if isElectron}
-				<a href="#" 
-					on:click|preventDefault={() => api.openExternal('https://www.sipme.io')} 
-					class="link"
-				>
+			<Link url={'https://www.sipme.io'}>
+				<span slot="content">
+					<i class="fa-solid fa-earth-americas text-gray-400 text-xs"></i>
 					www.sipme.io
-				</a>
-			{:else}
-				<a href="https://www.sipme.io" target="_blank" class="link">
-					www.sipme.io
-				</a>
-			{/if}
+				</span>
+			</Link>
+			
 			</div>
 		</div>
 	</div>

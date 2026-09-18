@@ -1,0 +1,13 @@
+
+
+.panel {
+	@apply border border-pulse-white/10 bg-pulse-white/5 rounded-xl;
+
+	.head {
+		@apply p-2 bg-pulse-white/5 rounded-lg text-lg font-bold text-gray-600;
+	}
+
+	.label {
+		@apply block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5;
+	}
+}

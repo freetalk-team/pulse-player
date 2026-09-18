@@ -45,3 +45,8 @@ export function normalizeCoverPaths(sets) {
 		return set;
 	}
 }
+
+export function normalizeFaviconPath(station) {
+	if (station.favicon)
+		station.favicon = `/thumb/radio/${basename(station.favicon)}`;
+}

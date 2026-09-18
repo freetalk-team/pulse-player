@@ -1,16 +1,15 @@
-import ffmpeg from 'ffmpeg-static'
-import { spawn } from 'child_process'
+import radio from '../../services/radio';
 
-const proc = spawn(ffmpeg, [
-  '-re',
-  '-i', trackPath,
+export default async function routes(app) {
 
-  '-f', 'mp3',
-  '-b:a', '192k',
+	app.get('/', async (req, reply) => {
 
-  'pipe:1'
-])
+		const query = req.query;
 
-proc.stdout.on('data', chunk => {
-  clients.forEach(res => res.write(chunk))
-})
+		query.limit = query.limit ? parseInt(query.limit) : 30;
+		query.offset = query.offset ? parseInt(query.offset) : 0;
+
+		return radio.queryStations(query, true);
+	});
+
+}

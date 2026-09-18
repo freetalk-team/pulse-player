@@ -1,21 +1,38 @@
 <script>
 
-import { selectedAlbum, selectedPlaylist, selectedFilter } from "../../stores/player";
+export let filter;
+export let collection;
+
+function formatTitle(filter) {
+	switch (filter) {
+
+		case '':
+		case 'all':
+		return 'Media';
+
+		case 'audio':
+		return 'Audio tracks';
+
+		case 'video':
+		return 'Video clips';
+
+		case 'collections':
+		return 'Albums and playlists';
+
+		case 'sets':
+		return 'Albums, playlists and playsets';
+
+		default:
+		return filter.capitalizeFirstLetter();
+	}
+}
 
 </script>
 
-<h2 class="font-lucida-sans uppercase text-2xl font-black tracking-tight truncate">
-	{#if $selectedAlbum}
-		{$selectedAlbum.name}
-	{:else if $selectedPlaylist}
-		{$selectedPlaylist.name}
-	{:else if $selectedFilter === 'audio'}
-		Audio tracks 
-	{:else if $selectedFilter === 'video'}
-		Video clips
-	{:else if $selectedFilter === 'sets'}
-		Playlists and albums
+<h2 class="font-lucida-sans uppercase text-2xl font-black tracking-wider truncate">
+	{#if collection}
+		{collection.name}
 	{:else}
-		Media
+		{formatTitle(filter)}
 	{/if}
 </h2>

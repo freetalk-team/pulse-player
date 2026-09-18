@@ -1,6 +1,8 @@
 node_modules
 dist
 out
+test
+native/build
 exp
 .DS_Store
 .eslintcache

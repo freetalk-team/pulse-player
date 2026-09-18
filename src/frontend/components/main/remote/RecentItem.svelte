@@ -1,11 +1,15 @@
 <script>
 
-import { playAlbum } from "../../../stores/library";
+import { Colors } from "../../ui/icons";
+
+import { playAlbum } from "../../../stores/albums";
 import { playPlaylist } from "../../../stores/playlist";
 
 import DurationBadge from "../../ui/DurationBadge.svelte";
 
 export let item;
+
+const [icon, iconColor] = item.icon.split(' ');
 
 function handleClick() {
 	switch (item.type) {
@@ -27,10 +31,10 @@ function handleClick() {
 >
 	<div class="w-10 h-10 bg-pulse-main rounded shadow-lg overflow-hidden flex-shrink-0">
 	{#if item.cover_path}
-		<img src="{platform.resolve(item.cover_path)}" alt="" class="w-full h-full object-cover" />
+		<img src="{platform.resolve(item.cover_path.split(',')[0])}" alt="" class="w-full h-full object-cover" />
 	{:else}
 		<div class="w-full h-full flex items-center justify-center text-gray-700">
-			<i class="fa-solid fa-2x {item.icon} {item.icon_color}"></i>
+			<i class="fa-solid fa-2x {icon}" style:color={Colors[iconColor || 'slate']}></i>
 		</div>
 	{/if}
 	</div>

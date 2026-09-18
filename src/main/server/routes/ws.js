@@ -1,14 +1,12 @@
-
-import { clients } from "../clients";
-import { events } from "../../events";
+import discovery from '../../services/discovery';
+import client from '../../services/client';
+import remote from '../../services/remote';
 
 export default async function routes(app) {
 
 	app.get('/', { websocket: true }, socket => {
 
-		clients.add(socket);
-
-		socket.subscriptions = new Set();
+		// socket.subscriptions = new Set();
 
 		socket.on('message', raw => {
 
@@ -31,47 +29,57 @@ export default async function routes(app) {
 
 				case 'hello':
 
-					socket.send(JSON.stringify({
-						type: 'hello',
-						name: 'Living Room Player'
-					}));
+				// socket.send(JSON.stringify({
+				// 	type: 'hello',
+				// 	name: discovery.hostname,
+				// 	username: discovery.username,
+				// 	version: discovery.version
+				// }));
+
+				socket.remoteId = message.id;
+				client.addClient(socket);
 
 				break;
 
-				case 'subscribe':
-				console.debug('SUBSCRIBE:', message.channel);
-				socket.subscriptions.add(message.channel);
-				break;
+				// case 'subscribe':
+				// console.debug('SUBSCRIBE:', message.channel);
+				// socket.subscriptions.add(message.channel);
+				// break;
 
-				case 'unsubscribe':
-				console.debug('UNSUBSCRIBE:', message.channel);
-				socket.subscriptions.delete(message.channel);
-				break;
+				// case 'unsubscribe':
+				// console.debug('UNSUBSCRIBE:', message.channel);
+				// socket.subscriptions.delete(message.channel);
+				// break;
 
 				case 'comment:add':
-				events.emit('comment:add', message.payload);
+				remote.onCommentAdd(message.payload);
 				break;
 
-				case 'pong':
+				case 'comment:added':
+				remote.onCommentAdded(message.payload, socket.remoteId);
 				break;
+
+				case 'reaction:add':
+				remote.onReactionAdd(message.payload);
+				break;
+
+				// case 'pong':
+				// break;
 			}
 		});
 
-		const ping = setInterval(() => {
+		// const ping = setInterval(() => {
 
-			if (socket.readyState === 1) {
+		// 	if (socket.readyState === 1) {
 
-				socket.send(JSON.stringify({
-					type: 'ping'
-				}));
-			}
+		// 		socket.send(JSON.stringify({
+		// 			type: 'ping'
+		// 		}));
+		// 	}
 
-		}, 15000);
+		// }, 15000);
 
-		socket.on('close', () => {
-			clearInterval(ping);
-			clients.delete(socket);
-		});
+		
 	});
 
 }

@@ -12,8 +12,10 @@ let timeout;
 const TIMEOUT = 400;
 
 function clearSearch() {
-	query = "";
-	onInput(query);
+	if (query) {
+		query = "";
+		onInput(query);
+	}
 }
 
 function handleKeydown(e) {

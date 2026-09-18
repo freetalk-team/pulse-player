@@ -1,23 +1,20 @@
 <script>
 
-import { onMount } from 'svelte';
-import { slide } from 'svelte/transition';
-import { flip } from 'svelte/animate';
+import { tooltip } from '../actions.js';
 
-import { scrollHover, tooltip } from '../actions.js';
-
-import { queue, recent, currentTrack, playTrack } from '../stores/play';
-import { isEditMode, activeEditPlayset } from '../stores/selection';
-import { activeEditPlaylist } from '../stores/playlist.js';
+import { queue, queueSets, recent, currentTrack, playTrack } from '../stores/play';
+import { editMode, activeEditPlayset, activeEditPlaylist } from '../stores/selection';
 import { createPlaylistFromRecent } from '../stores/library.js';
 import { editTrack } from '../stores/tracks.js';
 
-import ListFlex from './ui/ListFlex2.svelte';
+import List from './ui/List.svelte';
+import ListFlex from './ui/ListFlex.svelte';
 import Card from './rightbar/Card.svelte';
 import EditTrack from './rightbar/EditTrack.svelte';
 import Workbench from './rightbar/Workbench.svelte';
 import PlaysetWorkbench from './rightbar/PlaysetWorkbench.svelte';
 import TrackItem from './rightbar/TrackItem.svelte';
+import SetItem from './rightbar/SetItem.svelte';
 
 // Use 'export' to allow App.svelte to pass these in
 export let width;
@@ -37,7 +34,7 @@ function stopResizing() {
 
 	// Save the new widths
 	if (window.isElectron) {
-		window.api.setPref('rightbarWidth', width);
+		window.api.setPref('ui.rightbarWidth', width);
 	} else {
 		localStorage.setItem('rightbarWidth', width);
 	}
@@ -61,17 +58,17 @@ function stopResizing() {
 		<div class="v-sash"></div>
 	</div>
 
-	<div use:scrollHover class="custom-scroll overflow-y-auto p-2 flex flex-col h-full">
+	<div class="auto-hide-scrollbar overflow-y-auto p-2 flex flex-col h-full">
 
-		{#if $isEditMode}
+		{#if $editMode}
 			<!-- Use a wrapper that allows the content to scroll -->
 			<div class="flex flex-col flex-grow">
 
 				{#if $activeEditPlaylist}
 			
-					<div class="flex items-center gap-2 mb-2 mt-4 px-2 flex-shrink-0">
+					<div class="flex items-center gap-2 mb-2 mt-4 px-2">
 						<i class="fa-solid fa-pen-to-square text-pulse-accent text-xs"></i>
-						<span class="text-xs font-bold uppercase tracking-widest text-gray-400">
+						<span class="text-xs font-bold uppercase tracking-widest text-gray-400 truncate">
 							Editing: {$activeEditPlaylist.name || 'New Playlist'}
 						</span>
 					</div>
@@ -80,9 +77,9 @@ function stopResizing() {
 						<Workbench />
 					</div>
 				{:else if $activeEditPlayset}
-					<div class="flex items-center gap-2 mb-2 mt-4 px-2 flex-shrink-0">
+					<div class="flex items-center gap-2 mb-2 mt-4 px-2">
 						<i class="fa-solid fa-pen-to-square text-pulse-accent text-xs"></i>
-						<span class="text-xs font-bold uppercase tracking-widest text-gray-400">
+						<span class="text-xs font-bold uppercase tracking-widest text-gray-400 truncate">
 							Editing: {$activeEditPlayset.name || 'New Playset'}
 						</span>
 					</div>
@@ -104,6 +101,7 @@ function stopResizing() {
 			{/if}
 
 			<ListFlex
+				ItemComponent={TrackItem}
 				title="Queue" 
 				icon="fa-layer-group" 
 				iconColor="text-purple-500"
@@ -111,29 +109,69 @@ function stopResizing() {
 				onSelect={item => playTrack(item, true)}
 				reorder={true}
 				visibleItems={10}
-				itemComponent={TrackItem}
 				showEmpty={"Queue is empty"}
 			>
-				<div slot="actions">
+				{#snippet actions()}
 					<button 
-						class="text-red-400 w-4 h-4 hover:text-red-500 transition-colors cursor-pointer"
+						class="text-red-400 hover:text-red-500 transition-colors"
 						aria-label="Clear"
 						use:tooltip={"Clear"}
 						on:click={() => queue.set([])}
 					>
 						<i class="fa-solid fa-xmark text-xs"></i>
 					</button>
-				</div>
-				<div slot="item_actions"
-					class="gap-1 flex items-center"
-					let:index let:count let:move let:remove
-					on:click|stopPropagation
-				>
+				{/snippet}
+				
+				{#snippet head()}
+					{#if $queueSets.length > 0}
+						<div class="p-1 mb-2 mt-1 rounded-lg bg-pulse-white/2 border border-pulse-white/5">
+							<List 
+								ItemComponent={SetItem}
+								items={queueSets}
+								reorder={true}
+							>
+								{#snippet itemActions(item, ctx)}
+									<button 
+										aria-label="Move up"
+										class="w-5 h-5 flex items-center justify-center hover:bg-white/10 rounded text-gray-500 hover:text-pulse-accent"
+										class:hidden={ctx.first()}
+										on:click={() => ctx.up()}
+										use:tooltip={"Up"}
+									>
+										<i class="fa-solid fa-chevron-up text-[9px]"></i>
+									</button>
+									
+									<!-- Move Down -->
+									<button 
+										aria-label="Move down"
+										class="w-5 h-5 flex items-center justify-center hover:bg-white/10 rounded text-gray-500 hover:text-pulse-accent"
+										class:hidden={ctx.last()}
+										on:click={() => ctx.down()}
+										use:tooltip={"Down"}
+									>
+										<i class="fa-solid fa-chevron-down text-[9px]"></i>
+									</button>
+									<button 
+										aria-label="Remove"
+										on:click={() => ctx.rm()}
+										use:tooltip={"Remove"}
+										class="text-red-500"
+									>
+										<i class="fa-solid fa-remove text-[10px]"></i>
+									</button>
+								{/snippet}
+							</List>
+						</div>
+					{/if}
+				{/snippet}
+
+				{#snippet itemActions(item, ctx)}
+				
 					<button 
 						aria-label="Move up"
 						class="w-5 h-5 flex items-center justify-center hover:bg-white/10 rounded text-gray-500 hover:text-pulse-accent"
-						disabled={index === 0}
-						on:click={() => move(index, -1)}
+						class:hidden={ctx.first()}
+						on:click={() => ctx.up()}
 						use:tooltip={"Up"}
 					>
 						<i class="fa-solid fa-chevron-up text-[9px]"></i>
@@ -143,37 +181,37 @@ function stopResizing() {
 					<button 
 						aria-label="Move down"
 						class="w-5 h-5 flex items-center justify-center hover:bg-white/10 rounded text-gray-500 hover:text-pulse-accent"
-						disabled={index === count - 1}
-						on:click={() => move(index, 1)}
+						class:hidden={ctx.last()}
+						on:click={() => ctx.down()}
 						use:tooltip={"Down"}
 					>
 						<i class="fa-solid fa-chevron-down text-[9px]"></i>
 					</button>
 					<button 
 						aria-label="Remove"
-						on:click={() => remove(index)}
+						on:click={() => ctx.rm()}
 						use:tooltip={"Remove"}
 						class="text-red-500"
 					>
 						<i class="fa-solid fa-remove text-[10px]"></i>
 					</button>
-				</div>
+				{/snippet}
 			</ListFlex>
 
 			<ListFlex
+				ItemComponent={TrackItem}
 				title="Recent" 
 				icon="fa-list-ol" 
 				iconColor="text-orange-500" 
 				items={recent}
 				onSelect={playTrack}
 				visibleItems={20}
-				itemComponent={TrackItem}
 				hideEmpty={true}
 			>
-				<div slot="actions" class="gap-2 flex items-center">
+				{#snippet actions()}
 					<button 
 						on:click={createPlaylistFromRecent}
-						class="text-orange-400 hover:orange-red-500 transition-colors cursor-pointer"
+						class="text-orange-400 hover:orange-red-500 transition-colors"
 						aria-label="New playlist"
 						use:tooltip={"New playlist"}
 					>
@@ -181,28 +219,37 @@ function stopResizing() {
 					</button>
 					<button 
 						on:click={() => recent.set([])}
-						class="text-red-400 hover:text-red-500 transition-colors cursor-pointer"
+						class="text-red-400 hover:text-red-500 transition-colors"
 						aria-label="Clear"
 						use:tooltip={"Clear"}
 					>
 						<i class="fa-solid fa-xmark text-xs"></i>
 					</button>
-				</div>
-				<div 
-					slot="item_actions" 
-					class="gap-2 flex items-center"
-					let:index let:remove
-					on:click|stopPropagation
-				>
+				{/snippet}
+				{#snippet itemActions(item, ctx)}
 					<button 
 						aria-label="Remove"
 						use:tooltip={"Remove"}
 						class="text-red-500"
-						on:click={() => remove(index)}
+						on:click={() => ctx.rm()}
 					>
 						<i class="fa-solid fa-remove text-[10px]"></i>
 					</button>
-				</div>
+				{/snippet}
+				{#snippet contextMenu(item, menu)}
+					<button on:click={menu.execute(playTrack)} class="menu-item">
+						<i class="fa-solid fa-play text-pulse-accent"></i>
+						<span>Play</span>
+					</button>
+
+					<div class="h-px bg-white/5 my-1"></div>
+
+					<button on:click={menu.remove()} class="menu-item hover:text-red-500">
+						<i class="fa-solid fa-remove text-red-400"></i>
+						<span>Remove</span>
+					</button>
+
+				{/snippet}
 			</ListFlex>
 		{/if}
 	</div>

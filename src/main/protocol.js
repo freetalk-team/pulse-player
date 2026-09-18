@@ -4,8 +4,6 @@ import fs from 'fs';
 import { stat } from 'fs/promises';
 import mime from 'mime-types';
 
-import db from './db';
-
 const CHUNK_SIZE = 2 * 1024 * 1024;
 
 export function registerProtocols() {
@@ -88,7 +86,7 @@ async function handleRequest(request) {
 
 		console.error("Media protocol error:", err)
 
-		db.deleteTrack(path);
+		// db.deleteTrack(path);
 
 		return new Response(null, { status: 404 })
 

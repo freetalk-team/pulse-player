@@ -1,95 +1,101 @@
 
 import { writable, get } from 'svelte/store';
 
-import {  activeOrder, isEditMode, searchQuery } from './selection';
+import { randomIcon, randomColor } from '../components/ui/icons';
+
+import { activeOrder, editMode, searchQuery, activeEditPlaylist, activeEditPlayset, activeEditPlaylistTracks } from './selection';
 import { selectFilter, selectedFilter, selectedPlaylist } from './player';
-import { editPlaylist as homeEditPlaylist } from './home';
-import { currentLayout, confirmAction } from './ui';
-import { enqueueTracks } from './play';
+import { playlistCount } from './library';
+import { collections } from './collections';
+import { setTracks } from './tracks';
+import { confirmAction } from './ui';
+import { enqueueTracks, playSet } from './play';
+import { fetchCall } from './fetch';
 
+export const top = writable([]);
 export const playlists = writable([]);
-export const playlistCount = writable(0);
+export const tracks = writable([]);
 
-export const activeEditPlaylist = writable(null);
-export const activeEditPlaylistTracks = writable([]);
+export const isLoading = writable(false);
+export const hasMore = writable(false);
+
 export const playlistPreviews = writable({});
 
-let isEditing = false;
-let activeEditPlaylistTracksCount = 0;
+const queryPlaylists = fetchCall(api.queryPlaylists, playlists, isLoading, hasMore, buildQuery);
+export const fetch = (reset) => queryPlaylists({}, reset);
 
+let lastUpdatedPlaylist;
+let loaded = false;
 
+api.on('playlist:added', playlist => {
+	playlistCount.update(n => n + 1);
+	top.update(list => [playlist, ...list]);
 
-
-
-export async function loadPlaylists(count) {
-	const data = await api.getPlaylists();
-	playlists.set(data);
-
-	playlistCount.set(count);
-
-	isEditMode.subscribe(v => isEditing = v);
-
-	activeEditPlaylist.subscribe(playlist => {
-		if (!isEditing) return;
-
-		updatePlaylistMetadata(playlist);
-	});
-
-	activeEditPlaylistTracks.subscribe(tracks => {
-		if (!isEditing) return;
-
-		const id = get(activeEditPlaylist).id;
-		const purge = tracks.length < activeEditPlaylistTracksCount;
-		const updateStat = tracks.length != activeEditPlaylistTracksCount;
-
-		activeEditPlaylistTracksCount = tracks.length;
-
-		if (updateStat)
-			updatePlaylistStat(id, tracks);
-
-		updatePlaylistOrder(id, tracks, purge);
-	});
-}
-
-export async function loadPlaylistPreviews() {
-	const previews = await api.loadPlaylistPreviews();
-	playlistPreviews.set(previews);
-}
-
-
-export async function createPlaylist(name, tracks=[], edit=false) {
-
-	if (!tracks) {
-		
-		tracks = await api.getTracks({ 
-			query: get(searchQuery), 
-			filter: get(selectedFilter), 
-			sort: get(activeOrder), 
-			offset: 0, 
-			limit: 100
-		});
-
+	if (['playlists', 'collections'].includes(get(selectedFilter))) {
+		collections.update(list => [playlist, ...list]); // check match query!
 	}
 
-	const id = await api.savePlaylist({ name, tracks });
-	const playlist = { id, name, 
+	report.success(`Playlist added: '${playlist.name}'`);
+});
+
+activeEditPlaylistTracks.subscribe((tracks, reorder) => {
+	const id = get(activeEditPlaylist)?.id;
+	if (!id) return;
+
+	//console.debug('Active edit playlist update');
+
+	if (!reorder)
+		updatePlaylistStat(id, tracks);
+
+	updatePlaylistOrder(id, tracks);
+});
+
+export async function loadPlaylists() {
+	if (loaded) return;
+
+	const all = await api.getPlaylists();
+	top.set(all);
+
+	loaded = true;
+}
+
+export async function createPlaylist(name, tracks=[], edit=false, select=false) {
+
+	if (!tracks)
+		tracks = [];
+
+	const icon = `${randomIcon()} ${randomColor()}`;
+	const id = await api.createPlaylist({ name, tracks, icon });
+	if (!id) {
+		report.error('Failed to create playlist');
+		return null;
+	} 
+
+	const playlist = { id, name, icon, type: 'playlist',
 		track_count: tracks.length, 
 		total_rating: tracks.map(i => i.rating).sum(), 
 		total_duration: tracks.map(i => i.duration).sum()
 	};
 
+	// console.debug('New playlist:', playlist);
+
+	top.update(list => [playlist, ...list]);
 	playlists.update(list => [playlist, ...list]);
+	playlistCount.update(n => n + 1);
 
 	if (edit) {
-		activeEditPlaylistTracksCount = tracks.length;
-
 		activeEditPlaylist.set(playlist);
-		activeEditPlaylistTracks.set(tracks);
+		activeEditPlaylistTracks.value = tracks;
 
-		isEditMode.set(true);
+		editMode.set('playlist');
 	}
+
+	if (select)
+		selectedPlaylist.set(playlist);
+
+	report.success('Playlist created');
 	
-	return id;
+	return playlist;
 }
 
 export async function editPlaylist(playlist) {
@@ -97,33 +103,33 @@ export async function editPlaylist(playlist) {
 	if (!playlist)
 		playlist = get(selectedPlaylist);
 
+	const playlistId = playlist.id;
+
 	//const id = typeof playlist == 'object' ? playlist.id : playlist;
-	const tracks = await api.getPlaylistTracks(playlist.id);
+	const tracks = await api.getPlaylistTracks(playlistId);
+
+	lastUpdatedPlaylist = { id: playlistId, tracks };
 
 	// 1. Fetch tracks if they aren't already loaded (to populate the workbench)
 	// if (!playlist.tracks || playlist.tracks.length === 0)
 	// 	playlist.tracks = await api.getPlaylistTracks(playlist.id);
 
-	const layout = get(currentLayout);
+	console.debug('Editing playlist:', playlist, tracks.length);
 
-	if (layout == 'home') {
-		homeEditPlaylist.set({ ...playlist, tracks });
-	}
-	else {
+	activeEditPlayset.set(null);
+	activeEditPlaylist.set(playlist);
+	activeEditPlaylistTracks.value = tracks;
 
-		activeEditPlaylistTracksCount = tracks.length;
-
-		activeEditPlaylist.set(playlist);
-		activeEditPlaylistTracks.set(tracks);
-
-		isEditMode.set(true);
-	}
+	editMode.set('playlist');
 }
 
 export async function deletePlaylist(playlist) {
 
+	const selected = get(selectedPlaylist);
+	const activeEdit = get(activeEditPlaylist);
+
 	if (!playlist) 
-		playlist = get(selectedPlaylist);
+		playlist = selected;
 
 	const confirmed = await confirmAction({
 		title: 'Delete Playlist?',
@@ -133,161 +139,163 @@ export async function deletePlaylist(playlist) {
 	});
 
 	if (confirmed) {
-		// Only now do we call the SQLite delete
 		await api.deletePlaylist(playlist.id);
 
-		selectFilter('all');
+		//selectFilter('all');
 
+		top.update(list => list.filter(p => p.id !== playlist.id));
 		playlists.update(list => list.filter(p => p.id !== playlist.id));
-	}
+		collections.update(list => list.filter(p => !(p.type == 'playlist' && p.id == playlist.id)));
 
-}
+		playlistCount.update(n => n - 1);
 
-export async function renamePlaylist(id, newName) {
-	// 1. Optimistic Update
-	playlists.update(list => list.map(p => 
-		p.id === id ? { ...p, name: newName } : p
-	));
+		if (playlist.id == selected?.id) {
+			selectFilter('all');
+		}
 
-	// 2. Update Workbench if it's the active one
-	activeEditPlaylist.update(pl => {
-		if (pl && pl.id === id) return { ...pl, name: newName };
-		return pl;
-	});
-
-	// 3. Persist to DB
-	await api.renamePlaylist(id, newName);
-}
-
-export async function playPlaylist(playlist) {
-	if (!playlist) playlist = get(selectedPlaylist);
-
-	const tracks = await api.getPlaylistTracks(playlist.id);
-
-	if (!tracks || tracks.length === 0) return;
-
-	await api.updateLastPlayedPlaylist(playlist.id);
-
-	enqueueTracks(tracks);
-}
-
-
-export async function addTrackToPlaylist(playlistId, track) {
-
-	const isActiveEditPlaylist = !playlistId;
-
-	let currentTracks;
-
-	if (isActiveEditPlaylist) {
-		currentTracks = get(activeEditPlaylistTracks);
-	}
-	else {
-		if (typeof playlistId == 'object')
-			playlistId = playlistId.id;
-
-		const allPlaylists = get(playlists);
-		const targetPlaylist = allPlaylists.find(p => p.id === playlistId);
-
-		if (targetPlaylist) {
-
-			if (!targetPlaylist.tracks) 
-				targetPlaylist.tracks = await api.getPlaylistTracks(playlistId);
-
-			currentTracks = targetPlaylist.tracks
+		if (playlist.id == activeEdit?.id) {
+			editMode.set(false);
+			activeEditPlaylist.set(null);
 		}
 	}
-	
-	// 1. Get the current list of playlists
+
+}
+
+export async function playPlaylist(playlist, force) {
+
+	if (!playlist) 
+		playlist = get(selectedPlaylist);
+
+	playSet(playlist, force);
+}
+
+export async function addTrackToPlaylist(playlist, track) {
+
+	//console.debug('Add track to playlist');
+
+	const selected = get(selectedPlaylist);
+	const active = get(activeEditPlaylist);
+
+	// console.debug('Add tracks:', playlist);
+	// console.debug('Selected:', selected);
+	// console.debug('Active:', active);
+
+	let currentTracks, isActive = false;
+
+	if (!playlist) {
+		playlist = active;
+	}
+
+	const playlistId = playlist.id;
+
+	if (playlistId == active?.id) {
+		isActive = true;
+		currentTracks = activeEditPlaylistTracks.value;
+	}
+	else {
+		if (playlistId == lastUpdatedPlaylist?.id) {
+			currentTracks = lastUpdatedPlaylist.tracks;
+		}
+		else {
+			currentTracks = await api.getPlaylistTracks(playlistId);
+			lastUpdatedPlaylist = { id: playlistId, tracks: currentTracks };
+		}
+	}
 
 	const tracks = (Array.isArray(track) ? track : [track])
-		.filter(i => !currentTracks.find(t => t.path === i.path));
+		.filter(i => !currentTracks.find(m => m.id === i.id));
+
+	if (tracks.length == 0) return;
 
 	let position = currentTracks.length;
 
-	for (const track of tracks)
-		track.position = position++;
-	
-	const updatedTracks = [...currentTracks, ...tracks];
+	if (isActive) 
+		activeEditPlaylistTracks.add(tracks);
 
+	const data = {
+		track_count: playlist.track_count + tracks.length,
+		total_rating: playlist.total_rating + tracks.map(i => i.rating).sum(),
+		total_duration: playlist.total_duration + tracks.map(i => i.duration).sum()
+	};
 
-	if (isActiveEditPlaylist) {
-		activeEditPlaylistTracks.set(updatedTracks);
-	}
-	else {
+	console.debug('Updating playlist:', data);
 
-		await api.updatePlaylistOrder(playlistId, tracks);
+	updateStores(playlistId, data, isActive);
 
-		updatePlaylistStat(playlistId, updatedTracks);
-	}
+	await updatePlaylistOrder(playlistId, tracks, currentTracks.length);
+
+	currentTracks.push(...tracks);
 
 }
 
-export function updatePlaylistTracks(playlistId, newTracks) {
-	playlists.update(list => list.map(p => {
-		if (p.id === playlistId) {
-			// Update the count for the sidebar badge
-			return { ...p, tracks: newTracks, track_count: newTracks.length };
-		}
-		return p;
-	}));
-
-	// Persist to DB (Debounced in the component or here)
-	api.savePlaylist({ 
-		id: playlistId, 
-		tracks: newTracks.map(t => ({ id: t.id })) // Only need IDs for the link table
-	});
+async function updatePlaylistOrder(playlistId, newTracks, startIndex=-1) {
+    await api.updatePlaylistOrder(playlistId, newTracks, startIndex);
 }
 
-export async function updatePlaylistOrder(playlist, tracks, purge=false) {
+export async function renamePlaylist(id, newName, updateActive=true) {
+	const data = { name: newName };
 
-	const id = playlist ? (typeof playlist == 'object' ? playlist.id : playlist) : get(activeEditPlaylist).id;
+	updateStores(id, data, updateActive);
 
-    // 1. Prepare the data for the main process
-    const orderData = tracks.map((track, index) => ({
-        track_id: track.id,
-        position: index
-    }));
-
-	
-
-    // 2. Call IPC to update SQLite
-    await api.updatePlaylistOrder(id, orderData, purge);
-
-    // 3. Update the local store so the sidebar/previews react
-    // playlists.update(list => list.map(p => 
-    //     p.id === playlistId ? { ...p, tracks } : p
-    // ));
+	await api.updatePlaylist(id, data);
 }
 
 export async function updatePlaylistMetadata(playlist) {
     if (!playlist || !playlist.id) return;
 
-    // 1. Update the local playlists store (Optimistic UI)
-    playlists.update(list => list.map(p => 
-        p.id === playlist.id 
-            ? { ...p, icon: playlist.icon, icon_color: playlist.icon_color, genre: playlist.genre } 
-            : p
-    ));
+	const id = playlist.id;
+	const data = {
+		name: playlist.name,
+		icon: playlist.icon,
+		genre: playlist.genre || 'Various'
+	};
 
-    // 2. Persist to SQLite
-    await api.updatePlaylistMetadata({
-        id: playlist.id,
-        icon: playlist.icon || 'fa-music',
-        icon_color: playlist.icon_color || 'text-pulse-accent',
-        genre: playlist.genre || 'Various'
-    });
+    updateStores(id, data);
+
+    await api.updatePlaylist(id, data);
 }
 
 function updatePlaylistStat(id, tracks) {
-	playlists.update(list => list.map(p => 
-		p.id === id 
-			? { ...p, 
-				tracks: tracks, 
-				track_count: tracks.length,
-				total_rting: tracks.map(i => i.rating).sum(),
-				total_duration: tracks.map(i => i.duration).sum(),
-			  } 
-			: p
-	));
+
+	const data = {
+		track_count: tracks.length,
+		total_rating: tracks.map(i => i.rating).sum(),
+		total_duration: tracks.map(i => i.duration).sum()
+	};
+
+	updateStores(id, data);
 }
 
+function updateStores(id, data, updateActive) {
+	top.update(list => list.map(p => p.id === id ? { ...p, ...data } : p));
+    playlists.update(list => list.map(p => p.id === id ? { ...p, ...data } : p));
+    collections.update(list => list.map(p => p.type == 'playlist' && p.id === id ? { ...p, ...data } : p));
+
+	// 2. Update Workbench if it's the active one
+	if (updateActive) 
+		activeEditPlaylist.update(p => p && p.id === id ? { ...p, ...data } : p);
+}
+
+export function clearPlaylists() {
+	top.set([]);
+	playlists.set([]);
+	tracks.set([]);
+}
+
+function buildQuery(params, lastRequest) {
+
+	params.sort = params.sort || get(activeOrder);
+	params.query = params.query || get(searchQuery);
+
+	const changed = params.query != lastRequest.query ||
+		params.sort != lastRequest.sort;
+
+	Object.assign(lastRequest, params);
+
+	return changed;
+}
+
+async function playRemotePlaylist(playlist) {
+	const tracks = await api.getPlaylistTracks(playlist.id, playlist.remote);
+	enqueueTracks(tracks);
+}

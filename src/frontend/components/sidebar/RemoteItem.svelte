@@ -1,5 +1,9 @@
 <script>
 
+import { Colors } from "../ui/icons";
+
+import Badge from "../ui/BadgeCircle.svelte";
+
 export let item;
 export let isSelected = false;
 
@@ -11,14 +15,17 @@ export let isSelected = false;
 	class:border-l-2={isSelected}
 >
 	<div class="flex justify-center items-center w-10 h-10 rounded flex-shrink-0 bg-gradient-to-br from-white/5 to-transparent">
-		<i class="fa-solid {item.icon || 'fa-computer'} text-[14px] {item.icon_color || 'text-pulse-accent'}"></i>
+		<i class="fa-solid text-[14px] {item.icon || 'fa-computer'}" style:color={Colors[item.iconColor || 'accent']}></i>
 	</div>
-	<div class="flex flex-col">
+	<div class="flex flex-col flex-grow">
 		<h3 class="flex-grow text-sm font-semibold truncate text-pulse-white/60 group-hover/item:text-pulse-white">
-			{item.name}
+			{item.hostname}
 		</h3>
 		<!-- <p class="text-sm text-gray-600">
 			<i>{`${item.address}:${item.port}`}</i>
 		</p> -->
 	</div>
+	{#if item.unread > 0}
+		<Badge count={item.unread} />
+	{/if}
 </div>

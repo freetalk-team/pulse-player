@@ -4,19 +4,37 @@ import { fly } from "svelte/transition";
 
 export let activeTab;
 export let tabs = [];
-export let onSelect = () => {};
+export let onSelect;
+
+function onTabChange(tab) {
+	activeTab = tab;
+	onSelect?.(tab);
+}
 
 </script>
 
-<div class="flex items-center bg-black/40 rounded-2xl border border-white/5 w-fit shadow-inner relative">
+<!-- Tabs.svelte -->
+<div class="flex items-center bg-pulse-black/40 rounded-2xl border border-pulse-white/5 w-fit shadow-inner relative max-w-full overflow-hidden">
 	{#each tabs as tab}
 		<button 
-			on:click={() => onSelect(tab.id)}
-			class="relative z-10 flex items-center gap-2 px-6 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-300
+			on:click={() => onTabChange(tab.id)}
+			class="relative z-10 flex items-center gap-1.5 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap min-w-0
 			{activeTab === tab.id ? 'text-black' : 'text-gray-500 hover:text-gray-300'}"
 		>
-			<i class="fa-solid {tab.icon} text-[10px]"></i>
-			<span>{tab.label}</span>
+			<!-- Icon stays fixed -->
+			<i class="fa-solid {tab.icon} text-[10px] flex-shrink-0"></i>
+			
+			<!-- 
+			  If active, label displays fully. 
+			  If inactive, label drops down to zero width and hides cleanly on small layouts
+			-->
+			<span class="transition-all duration-300 overflow-hidden
+				{activeTab === tab.id 
+					? 'block opacity-100 max-w-[200px]' 
+					: 'hidden lg:block opacity-70 max-w-0 lg:max-w-[200px] hover:max-w-[200px] hover:opacity-100'}"
+			>
+				{tab.label}
+			</span>
 
 			{#if activeTab === tab.id}
 				<!-- THE SLIDING PILL -->
@@ -29,3 +47,4 @@ export let onSelect = () => {};
 		</button>
 	{/each}
 </div>
+

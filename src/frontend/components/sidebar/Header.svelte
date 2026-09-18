@@ -1,7 +1,7 @@
 <script>
 
-import { currentLayout } from '../../stores/ui.js';
-import { isImporting } from '../../stores/tracks.js';
+import { currentLayout } from '../../stores/ui';
+import { isImporting } from '../../stores/import';
 
 import FileImport from '../ui/FileImport.svelte';
 import ImportButtons from '../ui/ImportButtons.svelte';
@@ -12,7 +12,7 @@ import ImportButtons from '../ui/ImportButtons.svelte';
 	<h3 class="flex-grow truncate text-xs font-bold uppercase text-gray-500 tracking-widest">
 		{$currentLayout.capitalizeFirstLetter()}
 	</h3>
-	{#if platform.import && !$isImporting}
+	{#if __PLATFORM__ !== 'remote'}
 		<div class="flex items-center gap-2 px-2 py-1 opacity-60 hover:opacity-100 transition-all duration-300 bg-pulse-white/10 rounded-lg">
 			<ImportButtons />
 		</div>

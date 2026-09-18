@@ -3,173 +3,60 @@ import { writable, get, derived } from 'svelte/store';
 import { confirmAction } from './ui';
 import { selectFilter, selectedAlbum } from './player';
 import { enqueueTracks, recent, queue } from './play';
-import { createPlaylist, playlists, playlistCount, loadPlaylists } from './playlist';
-import { audioCount, videoCount, tracks, initTracks } from './tracks';
-import { playsets, playsetCount, loadPlaysets } from './playsets';
+import { tracks } from './tracks';
+import { createPlaylist, clearPlaylists } from './playlist';
+import { clearPlaysets } from './playsets';
+import { clearAlbums } from './albums';
+import { currentLayout } from './ui';
 
-// export const tracks = writable([]);
-export const albums = writable([]);
+
+export const audioCount = writable(0);
+export const videoCount = writable(0);
+export const trackCount = derived(
+    [audioCount, videoCount],
+    ([$audioCount, $videoCount]) => $audioCount + $videoCount
+);
 export const albumCount = writable(0);
+export const playlistCount = writable(0);
+export const playsetCount = writable(0);
+export const genres = writable([]);
 
-export const customGenres = writable([]);
 
-api.on('import-album', album => {
+api.on('import-progress', (progress) => {
+	const added = progress.tracks;
 
-	console.debug('Adding album:', album);
+	const audio = added.filter(t => t.type == 'audio').length;
+	const video = added.length - audio;
 
-	albums.update(list => {
-		let found = false;
-
-		const updated = list.map(a => {
-			if (a.id === album.id) {
-				found = true;
-				return {
-					...a,
-					genre: album.genre,
-					year: album.year,
-					cover_path: album.cover_path
-				};
-			}
-
-			return a;
-		});
-
-		if (found)
-			return updated;
-
-		albumCount.update(n => n + 1);
-
-		return [...updated, album];
-	});
+	audioCount.update(n => n + audio);
+	videoCount.update(n => n + video);
 });
 
-export const defaultGenres = [
-    'Jazz', 'Electronic', 'Blues', 
-    'Classical', 'Lo-Fi', 'Workout', 'Chill', 'Deep House', 'Reggae', 
-    'Soul', 'Synthwave', 'Indie', 'Alternative', 'R&B', 
-    'Techno', 'Ambient', 'Punk', 'Disco', 'Dubstep', 'Funk',
-    'Hardstyle', 'House', 'Latin', 'Opera', 'Psytrance', 
-    'Trap', 'Vaporwave', 'World'
-
-	// pop
-	, 'Pop', 'Pop Folk',  'K-Pop', 'Alternative Pop'
-
-	// folk
-	, 'Folk', 'YU Folk', 'BG Folk', 'Turbo Folk', 'Country'
-
-	// rock
-	, 'Rock', 'Rock & Roll', 'Hard Rock', 'Progressive Rock', 'Classic Rock',  'Alternative Rock'
-
-	// metal
-	, 'Metal', 'Thrash Metal', 'Grunge'
-
-	// rap
-	, 'Hip Hop', 'Rap'
-
-].sort();
-
-export const allAvailableGenres = derived(
-	[customGenres],
-	([$customGenres]) => [...defaultGenres, ...$customGenres].sort()
-);
-
-export async function loadCustomGenres() {
-	if (window.api?.getCustomGenres) {
-		const savedGenres = await window.api.getCustomGenres();
-		customGenres.set(savedGenres);
-	}
-}
-
-export async function saveNewCustomGenre(genre) {
-	// 1. Optimistic update in Svelte
-	customGenres.update(prev => {
-		if (!prev.includes(genre) && !defaultGenres.includes(genre)) {
-			return [...prev, genre];
-		}
-		return prev;
-	});
-
-	// 2. Persist to electron-store via IPC
-	await window.api.saveCustomGenre(genre);
-}
+api.on('track:added', track => {
+	const store = track.type == 'video' ? videoCount : audioCount;
+	store.update(n => n + 1);
+});
 
 export async function loadLibrary() {
-	const { video_count, audio_count, album_count, playlist_count, playset_count } = await api.getLibrary();
+	const stat = await api.getLibraryStat();
 
-	initTracks(audio_count, video_count);
+	audioCount.set(stat.audio_count);
+	videoCount.set(stat.video_count);
+	albumCount.set(stat.album_count);
+	playlistCount.set(stat.playlist_count);
+	playsetCount.set(stat.playset_count);
 
-	await loadPlaylists(playlist_count);
-	await loadPlaysets(playset_count);
-	await loadAlbums(album_count);
-	await loadRecentTracks();
-
-	await loadCustomGenres();
+	await loadGenres();
 }
 
-async function loadAlbums(count) {
-	const data = await api.getAlbums();
-	albums.set(data);
-
-	albumCount.set(count);
-
-	// console.debug('Loaded albums:', data);
-};
-
-
-async function loadRecentTracks() {
-	const data = await api.getRecentTracks();
-	recent.set(data);
-
-	return data;
+export async function loadGenres() {
+	const all = await api.getGenres();
+	genres.set(all);
 }
 
-export async function playAlbum(album) {
-
-	if (!album)
-		album = get(selectedAlbum);
-
-	const tracks = await api.getAlbumTracks(album.id);
-
-	if (!tracks || tracks.length === 0) return;
-
-	await api.updateLastPlayedAlbum(album.id);
-
-	enqueueTracks(tracks);
-
-	albums.update(list => {
-
-		const index = list.findIndex(a => a.id === album.id);
-
-		if (index == -1) return [album, ...list];
-		if (index == 0) return list;
-
-		list.splice(index, 1);
-
-		return [album, ...list];
-	});
-}
-
-export async function deleteAlbum(album) {
-
-	if (!album)
-		album = get(selectedAlbum);
-
-	const confirmed = await confirmAction({
-		title: 'Delete Album?',
-		message: `This will permanently remove "${album.name}". Your music files won't be touched.`,
-		confirmText: 'Delete',
-		danger: true
-	});
-
-	if (confirmed) {
-		// Only now do we call the SQLite delete
-		await api.deleteAlbum(album.id);
-
-		selectFilter('all');
-
-		albums.update(list => list.filter(p => p.id !== album.id));
-	}
-
+export async function addGenre(genre) {
+	await api.addGenre(genre);
+	genres.update(v => [...v, genre]);
 }
 
 export async function createPlaylistFromRecent() {
@@ -199,13 +86,16 @@ export async function clearLibrary() {
 	playsetCount.set(0);
 	albumCount.set(0);
 
+	clearAlbums();
+	clearPlaylists();
+	clearPlaysets();
+
 	tracks.set([]);
-	albums.set([]);
-	playlists.set([]);
-	playsets.set([]);
 
 	recent.set([]);
 	queue.set([]);
 
 	selectFilter('all');
+
+	currentLayout.set('home');
 }

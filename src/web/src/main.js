@@ -12,7 +12,7 @@ import './platform'
 
 import db from './db'
 
-import App from '@frontend/App.svelte'
+import App from './App.svelte'
 
 async function bootstrap() {
 

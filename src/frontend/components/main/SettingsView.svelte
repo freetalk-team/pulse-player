@@ -5,6 +5,7 @@ import { currentSettings } from '../../stores/settings';
 
 import GeneralSettings from './settings/General.svelte';
 import InterfaceSettings from './settings/Interface.svelte';
+import Features from './settings/Features.svelte';
 import About from './settings/About.svelte';
 
 import ComponentEditor from './settings/ComponentEditor.svelte';
@@ -22,12 +23,12 @@ import ComponentEditor from './settings/ComponentEditor.svelte';
 			use:scrollHover
 			class="flex-grow custom-scroll overflow-y-auto px-6 relative"
 		>
-
-
 			{#if $currentSettings === 'general'}
 				<GeneralSettings />
 			{:else if $currentSettings === 'ui'}
 				<InterfaceSettings />
+			{:else if $currentSettings === 'features'}
+				<Features />
 			{:else if $currentSettings === 'about'}
 				<About />
 			{:else}

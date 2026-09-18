@@ -3,30 +3,16 @@ import { electronAPI } from '@electron-toolkit/preload'
 
 const ipc = {
 	send: (channel, data) => ipcRenderer.send(channel, data),
+	invoke: (channel, ...data) => ipcRenderer.invoke(channel, ...data),
 	on: (channel, func) => {
 		//const subscription = (event, ...args) => func(event, ...args)
 		const subscription = (event, ...args) => func(...args)
 		ipcRenderer.on(channel, subscription)
 		return () => ipcRenderer.removeListener(channel, subscription)
-	},
-	invoke: (channel, ...data) => ipcRenderer.invoke(channel, ...data)
+	}
 }
 
-function getLibrary() {
-	return ipc.invoke('db:get-library');
-}
 
-function getAlbums() {
-	return ipc.invoke('db:get-top', { collection: 'album', limit: 16 });
-}
-
-function getPlaysets() {
-	return ipc.invoke('db:get-top', { collection: 'playset', limit: 16 });
-}
-
-function getPlaylists() {
-	return ipc.invoke('db:get-top', { collection: 'playlist', limit: 16 });
-}
 
 function getCollections(collections, query, remoteId) {
 	console.log('GET collections', collections, query);
@@ -35,80 +21,6 @@ function getCollections(collections, query, remoteId) {
 		: ipc.invoke('db:get-collections', collections, query);
 }
 
-function clearLibrary() {
-	return ipc.invoke('db:clear-library');
-}
-
-function getTracks(query, remoteId) {
-	return remoteId
-		? ipc.invoke('get-tracks', query, remoteId)
-		: ipc.invoke('db:get-tracks', query);
-}
-
-function getRecentTracks(query) {
-	return ipc.invoke('db:get-recent-tracks', { offset: 0, limit: 50 });
-}
-
-function updateTrack(track, opt) {
-	return ipc.invoke('update-track', track, opt);
-}
-
-function updateLastPlayed(track) {
-	return ipc.invoke('db:update-last-played', track.id);
-}
-
-function incrementTrackRating(trackId) {
-	return ipc.invoke('db:increment-track-rating', trackId);
-}
-
-
-function getAlbumTracks(albumId) {
-	return ipc.invoke('db:get-album-tracks', albumId)
-}
-
-function deleteAlbum(albumId) {
-
-}
-
-function updateLastPlayedAlbum(albumId) {
-	return ipc.invoke('db:update-last-played-album', albumId);
-} 
-
-function getPlaylist(id) {
-	return ipc.invoke('db:get-playlist', id);
-}
-
-function savePlaylist(playlist) {
-	return ipc.invoke('db:save-playlist', playlist);
-}
-
-function deletePlaylist(playlistId) {
-	return ipc.invoke('db:delete-playlist', playlistId);
-}
-
-function renamePlaylist(id, name) {
-	return ipc.invoke('db:rename-playlist', { id, name });
-}
-
-function getPlaylistTracks(playlistId) {
-	return ipc.invoke('db:get-playlist-tracks', playlistId);
-}
-
-function updateLastPlayedPlaylist(playlistId) {
-	return ipc.invoke('db:update-last-played-playlist', playlistId);
-} 
-
-function updatePlaylistMetadata(meta) {
-	return ipc.invoke('db:update-playlist-metadata', meta);
-}
-
-function updatePlaylistOrder(id, tracks, purge) {
-	return ipc.invoke('db:update-playlist-tracks-order', { id, tracks, purge });
-}
-
-function loadPlaylistPreviews() {
-	return ipc.invoke('db:get-playlist-previews');
-}
 
 function getSets(query) {
 	return ipc.invoke('db:get-sets', query);
@@ -118,104 +30,60 @@ function getPlaysetMembers(playsetId) {
 	return ipc.invoke('db:get-playset-members', playsetId);
 }
 
-function createPlayset(name) {
-
-}
-
-function addPlaysetMemeber(playsetId, member) {
-
-}
-
-function getComponent(id) {
-	return ipc.invoke('db:get-component', id);
-}
-
-function getComponents() {
-	return ipc.invoke('db:get-components');
-}
-
-function updateComponentsOrder(components) {
-	return ipc.invoke('db:update-components-priority', components);
-}
-
-function saveComponent(component) {
-	return ipc.invoke('db:save-component', component);
-}
-
-function deleteComponent(id) {
-	return ipc.invoke('db:delete-component', id);
-}
-
-function enableComponent(id, enable) {
-	return ipc.invoke('db:enable-component', id, enable);
-}
-
-function addPost(type, item, content) {
-	return ipc.invoke('db:add-post', { type, item, content });
-}
-
-function deletePost(post) {
-	return ipc.invoke('db:delete-post', post.id);
-}
-
-function getPosts(offset, limit, remoteId) {
-	return remoteId
-		? ipc.invoke('get-posts', { offset, limit, remoteId })
-		: ipc.invoke('db:get-posts', { offset, limit });
-	
-}
-
-function getComments(postId, remoteId) {
-	return remoteId
-		? ipc.invoke('get-comments', postId, remoteId)
-		: ipc.invoke('db:get-comments', postId);
-}
-
-function addComment(content, postId, parentId, remoteId) {
-
-	const comment = { content, postId, parentId };
-
-	return remoteId
-		? ipc.invoke('add-comment', comment, remoteId)
-		: ipc.invoke('db:add-comment', comment);
-}
-
-function connectRemote(remoteId) {
-	return ipc.invoke('connect-remote', remoteId);
-}
-
-function disconnectRemote(remoteId) {
-	return ipc.invoke('disconnect-remote', remoteId);
-}
-
 let prefs;
 
 async function getPrefs() {
-	if (!prefs)
+	if (!prefs) {
 		prefs = await ipc.invoke('get-prefs');
+
+		console.debug('Loaded prefs:', prefs);
+	}
 
 	return prefs;
 }
 
-function getPref(key) {
-	return prefs[key];
+function getPref(key, defaultValue) {
+	const parts = key.split('.');
+	let obj = prefs;
+
+	for (const p of parts) {
+		if (obj == null || typeof obj !== 'object' || !(p in obj)) {
+			return defaultValue;
+		}
+
+		obj = obj[p];
+	}
+
+	return obj;
 }
 
 function setPref(key, value) {
+	if (typeof key == 'string') {
+
+		const parts = key.split('.');
+		let obj = prefs;
+
+		for (let i = 0; i < parts.length - 1; i++) {
+			const p = parts[i];
+
+			if (typeof obj[p] !== 'object' || obj[p] === null) {
+				obj[p] = {};
+			}
+
+			obj = obj[p];
+		}
+
+		obj[parts[parts.length - 1]] = value;
+
+	}
+	else {
+		for (const [k, v] of Object.entries(key))
+			prefs[k] = v;
+	}
+
 	return ipc.invoke('set-pref', key, value)
 }
 
-function getCustomGenres() {
-	return ipc.invoke('get-custom-genres');
-}
-
-function saveCustomGenre(genre) {
-	return ipc.invoke('save-custom-genre', genre);
-}
-
-function loadRemotePlayers() {
-	return ipc.invoke('remote-players');
-}
 
 // 1. Define your custom API
 const api = {
@@ -223,69 +91,159 @@ const api = {
 	ipc,
 
 	on: (...args) => ipc.on(...args),
-		
 
 	openExternal: (url) => shell.openExternal(url),
 	getPathForFile: (file) => webUtils.getPathForFile(file), 
-	dialogOpenDirectory: () => ipc.invoke('dialog:open-directory'),
-	dialogOpenFile: () => ipc.invoke('dialog:open-file'),
+	dialogOpenDirectory: (defaultPath) => ipc.invoke('dialog:open-directory', defaultPath),
+	dialogOpenFile: (defaultPath) => ipc.invoke('dialog:open-file', defaultPath),
 	scanFolders: (paths, playlistId) => ipc.invoke('scan-folders', paths, playlistId),
 
 	setPref,
 	getPrefs,
 	getPref,
 
-	getLibrary,
-	getCollections,
-	clearLibrary,
+	getLibraryStat() { return ipc.invoke('get-library-stat'); },
+	clearLibrary()   { return ipc.invoke('clear-library'); },
 	
-	getTracks,
-	getRecentTracks,
-	updateLastPlayed,
-	incrementTrackRating,
-	updateTrack,
+	queryTracks(params, remoteId) { 
+		return remoteId
+			? ipc.invoke('query-remote-tracks', params, remoteId)
+			: ipc.invoke('query-tracks', params); 
+	},
+	getRecentTracks(limit)    { return ipc.invoke('get-recent-tracks', limit); },
+	updateLastPlayedTrack(track) { return ipc.invoke('update-last-played-track', track.id); },
+	updateTrack(track, opt)   { return ipc.invoke('update-track', track, opt); },
+	removeTrack(id, remove)   { return ipc.invoke('remove-track', id, remove); },
+	fetchTrackMeta(track)     { return ipc.invoke('fetch-track-meta', track); },
 
-	getAlbums,
-	getAlbumTracks,
-	deleteAlbum,
-	updateLastPlayedAlbum,
+	getAlbums(limit)          { return ipc.invoke('get-albums', limit); },
+	queryAlbums(params)       { return ipc.invoke('query-albums', params); },
+	getAlbumTracks(id, remoteId) { 
+		return remoteId
+			? ipc.invoke('get-remote-album-tracks', id, remoteId)
+			: ipc.invoke('get-album-tracks', id); 
+	},
+	deleteAlbum(id)           { return ipc.invoke('delete-album', id); },
 
-	getPlaylists,
-	savePlaylist,
-	deletePlaylist,
-	renamePlaylist,
-	getPlaylistTracks,
-	updatePlaylistMetadata,
-	updatePlaylistOrder,
-	updateLastPlayedPlaylist,
-	loadPlaylistPreviews,
+	getPlaylists(limit)       { return ipc.invoke('get-playlists', limit); },
+	queryPlaylists(params)    { return ipc.invoke('query-playlists', params); },
+	createPlaylist(playlist)  {
+		if (playlist.tracks)
+			playlist.tracks = playlist.tracks.map((track, index) => ({
+				track_id: track.id,
+				position: index
+			}));
+
+		return ipc.invoke('create-playlist', playlist); 
+	},
+	deletePlaylist(id)        { return ipc.invoke('delete-playlist', id); },
+	updatePlaylist(id, data)  { return ipc.invoke('update-playlist', id, data); },
+	getPlaylistTracks(id, remoteId) { 
+		return remoteId
+			? ipc.invoke('get-remote-playlist-tracks', id, remoteId)
+			: ipc.invoke('get-playlist-tracks', id); 
+	},
+	updatePlaylistOrder(id, tracks, startIndex) {
+		const [purge, start] = startIndex < 0 ? [true, 0] : [false, startIndex];
+		const order = tracks.map((track, index) => ({
+			track_id: track.id,
+			position: index + start
+		}));
+		
+		return ipc.invoke('update-playlist-order', id, order, purge); 
+	
+	},
 
 	getSets,
-	getPlaysets,
-	getPlaysetMembers,
-	createPlayset,
-	addPlaysetMemeber,
+	getPlaysets(limit)      { return ipc.invoke('get-playsets', limit); },
+	queryPlaysets(params)   { return ipc.invoke('query-playsets', params); },
+	getPlaysetMembers(id)   { return ipc.invoke('get-playset-members', id); },
+	createPlayset(playset)  { 
+		if (playset.members)
+			playset.members = playset.members.map((member, index) => ({
+				member_id: member.id,
+				member_type: member.type,
+				position: index
+			}));
 
-	getComponent,
-	getComponents,
-	saveComponent,
-	deleteComponent,
-	enableComponent,
-	updateComponentsOrder,
+		return ipc.invoke('create-playset', playset); 
+	},
+	updatePlayset(id, data) { return ipc.invoke('update-playset', id, data); },
+	deletePlayset(id)       { return ipc.invoke('delete-playset', id); },
+	updatePlaysetOrder(id, members, startIndex) {
+		const [purge, start] = startIndex < 0 ? [true, 0] : [false, startIndex];
+		const order = members.map((member, index) => ({
+			member_id: member.id,
+			member_type: member.type,
+			position: index + start
+		}));
 
-	addPost,
-	deletePost,
-	getPosts,
-	getComments,
-	addComment,
+		return ipc.invoke('update-playset-order', id, order, purge); 
+	},
 
-	connectRemote,
-	disconnectRemote,
+	updateLastPlayed(id, type) { return ipc.invoke('update-last-played', id, type); },
 
-	getCustomGenres,
-	saveCustomGenre,
+	queryCollections(collection, params, remoteId) { 
+		if (typeof collection == 'object') {
+			remoteId = params;
+			params = collection;
+			collection = params.collection;
+		}
 
-	loadRemotePlayers,
+		return remoteId
+			? ipc.invoke('query-remote-collections', collection, params, remoteId)
+			: ipc.invoke('query-collections', collection, params); 
+	}, 
+
+	getComponent(id)                  { return ipc.invoke('get-component', id); },
+	getComponents()                   { return ipc.invoke('get-components'); },
+	updateComponentsOrder(components) { return ipc.invoke('update-components-priority', components); },
+	saveComponent(component)          { return ipc.invoke('save-component', component); },
+	deleteComponent(id)               { return ipc.invoke('delete-component', id); },
+	enableComponent(id, enable)       { return ipc.invoke('enable-component', id, enable); },
+
+	addPost(type, item, content)  { return ipc.invoke('add-post', { type, item, content }); },
+	deletePost(id)                { return ipc.invoke('delete-post', id); },
+	getPosts(query, remoteId)     { return ipc.invoke('query-posts', query, remoteId); },
+	getComments(postId, commentId, remoteId) { return ipc.invoke('get-comments', postId, commentId, remoteId); },
+	addComment(comment, remoteId) { return ipc.invoke('add-comment', comment, remoteId); },
+	addReaction(reaction, remote) { ipc.invoke('add-reaction', reaction, remote); },
+
+	loadRemotePlayers()        { return ipc.invoke('remote-players'); },
+	connectRemote(remoteId)    { return ipc.invoke('connect-remote', remoteId); },
+	disconnectRemote(remoteId) { return ipc.invoke('disconnect-remote', remoteId); },
+
+	getGenres()     { return ipc.invoke('get-genres'); },
+	addGenre(genre) { return ipc.invoke('add-genre', genre); },
+
+	loadFavouriteStations(limit)       { return ipc.invoke('get-favourite-stations', limit); },
+	loadRecentStations(limit)          { return ipc.invoke('get-recent-stations', limit); },
+	queryStations(params)              { return ipc.invoke('query-stations', params); },
+	setStationFavourite(station) {
+		return ipc.invoke('set-station-favourite', station.uuid, station.favourite); 
+	},
+	updateStation(id, data)            { return ipc.invoke('update-station', id, data); },
+	updateLastPlayedStation(station)   { return ipc.invoke('update-last-played-station', station.id); },
+	startRecording(stationId)     { return ipc.invoke('start-recording', stationId); },
+	stopRecording(stationId)           { return ipc.invoke('stop-recording', stationId); },
+	addRecording(recording)            { return ipc.invoke('add-recording', recording); },
+	removeRecording(recordingId)       { return ipc.invoke('remove-recording', recordingId); },
+	setRecordingActive(recordingId, active) { return ipc.invoke('set-recording-active', recordingId, active); },
+	loadRecordings(stationId)          { return ipc.invoke('get-recordings', stationId); },
+
+	download(type, item, opt) { return ipc.invoke('download', type, item, opt); },
+
+	processLink(url) { return ipc.invoke('process-link', url); },
+
+	getFeatures() { return ipc.invoke('get-features'); },
+	async activatePro(code) { 
+		const res = await ipc.invoke('activate-pro', code);
+		if (res.success) {
+			prefs.features = res.features;
+		}
+
+		return res;
+	}
 }
 
 const platform = {
@@ -293,9 +251,16 @@ const platform = {
 		return path.startsWith('http')
 			? path
 			: `media://${path}`;
-	}
+	},
 
-	, import: true
+	resolveThumb(path) {
+		return this.resolve(path);
+	},
+
+	play(element, path) {
+		element.src = this.resolve(path);
+		return element.play();
+	}
 }
 
 

@@ -1,7 +1,9 @@
 <script>
-	import { isElectron } from "../../../../utils/env"
+
+import Link from '../../../ui/Link.svelte';
 
 </script>
+
 <section class="mb-10">
 	<h2 class="text-xl font-semibold text-pulse-white mb-4 flex items-center gap-2">
 		<i class="fa-solid fa-bolt-lightning text-pulse-accent"></i>
@@ -49,18 +51,11 @@
 
 	<!-- GitHub -->
 	<div class="pt-4">
-		{#if isElectron}
-			<a href="#" 
-				on:click|preventDefault={() => api.openExternal('https://github.com/freetalk-team/player')} 
-				class="link">
+		<Link url={'https://github.com/freetalk-team/player'}>
+			<span slot="content">
 				<i class="fa-brands fa-github"></i>
 				View source code on GitHub
-			</a>
-		{:else}
-			<a href="https://github.com/freetalk-team/player" target="_blank" class="link">
-				<i class="fa-brands fa-github"></i>
-				View source code on GitHub
-			</a>
-		{/if}
+			</span>
+		</Link>
 	</div>
 </section>

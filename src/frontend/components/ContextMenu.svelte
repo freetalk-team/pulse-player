@@ -6,7 +6,6 @@ import { fade, fly } from 'svelte/transition';
 
 import { closeContextMenu, renamingId } from '../stores/ui';
 import { playPlaylist, deletePlaylist, editPlaylist } from '../stores/playlist';
-import { activeEditPlaylist, isEditMode } from '../stores/selection';
 
 export let x;
 export let y;
@@ -62,7 +61,7 @@ async function handleEdit() {
 	transition:fly={{ y: 5, duration: 150 }}
 	on:mousedown|stopPropagation 
 	on:contextmenu|preventDefault|stopPropagation
-	class="fixed z-100 w-48 bg-gray-900/95 backdrop-blur-md border border-white/10 rounded-lg shadow-2xl py-1 overflow-hidden"
+	class="menu"
 	style="top: {y}px; left: {x}px;"
 >
 	<button on:click={handlePlay} class="menu-item">
@@ -96,6 +95,14 @@ async function handleEdit() {
 <style>
 
 @reference "../assets/main.css";
+
+.menu {
+	@apply fixed z-100 w-48 bg-gray-900/95 backdrop-blur-md border border-pulse-white/10 rounded-lg shadow-2xl py-1 overflow-hidden;
+}
+
+:global(.light-theme) .menu {
+	@apply bg-green-900/95;
+}
 
 .menu-item {
 	@apply w-full flex items-center gap-3 px-3 py-2 text-xs text-gray-300 hover:bg-white/10 hover:text-white transition-colors text-left;

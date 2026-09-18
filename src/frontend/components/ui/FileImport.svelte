@@ -6,7 +6,7 @@ import { fade } from 'svelte/transition';
 
 import { sleep } from '../../utils/sleep';
 
-import { importProgress as progress, isImporting } from '../../stores/tracks';
+import { importProgress as progress, isImporting } from '../../stores/import';
 
 let fileInput;
 let isUploading = false;
@@ -74,7 +74,7 @@ function cancelImport() {
 		>
 			<!-- BACKGROUND PROGRESS BAR -->
 			<div 
-				class="absolute inset-0 bg-pulse-accent/20 transition-all" 
+				class="absolute inset-0 bg-pulse-accent/20 transition-all ease-out" 
 				style="width: {$progress}%"
 			></div>
 

@@ -1,28 +1,81 @@
 <script>
 
-import { onMount, onDestroy } from 'svelte';
+import { Colors } from '../../ui/icons';
 
-import { connectRemote, disconnectRemote } from '../../../stores/remote';
+import { getDownloadOptions, saveDownloadOptions, download } from '../../../stores/remote/downloads';
+import { runPremiumAction } from '../../PremiumLockModal.svelte';
 
 import Home from './RemoteHome.svelte';
 import Library from './RemoteLibrary.svelte';
+import DownloadModal from "./DownloadOptions.svelte";
 
 export let remote;
 
 let activeTab = 'home';
 
-onMount(() => connectRemote(remote));
-onDestroy(() => disconnectRemote(remote));
+let showModal = false;
+let downloadItem;
+let downloadType;
+let downloadOptions;
+
+function onDownload(type, item) {
+
+	console.debug('On download:', type);
+
+	if (['album', 'playlist'].includes(type) && !runPremiumAction('REMOTE_DOWNLOAD')) {
+		return;
+	}
+
+	const opt = getDownloadOptions(type);
+
+	if (opt.skipOptions) {
+		startDownload(type, item, opt);
+	}
+	else {
+		downloadType = type;
+		downloadItem = item;
+		downloadOptions = opt;
+
+		showModal = true;
+	}
+}
+
+function handleConfirmDownload(item, opt) {
+
+	const type = downloadType;
+
+	saveDownloadOptions(type, opt);
+	startDownload(type, item, opt);
+}
+
+function getDownloadDir(item, opt) {
+	return `${opt.rootDir}/${opt.subdirPattern.trim()}`
+		.replaceAll('[ARTIST]', item.artist)
+		.replaceAll('[ALBUM]', item.name)
+		.replaceAll('[ALBUM_YEAR]', item.year ? `${item.name} (${item.year})` : item.name)
+		.replace('[GENRE]', item.genre)
+		.replace(/\/+/g, '/'); // Clean up any duplicate backslashes
+}
+
+function startDownload(type, item, opt) {
+	download(type, item, {
+		dir: getDownloadDir(item, opt),
+		filename: opt.filenamePattern.trim(),
+		overwrite: opt.overwrite
+	});
+}
 
 </script>
+
+<DownloadModal bind:show={showModal} opt={downloadOptions} item={downloadItem} onConfirm={handleConfirmDownload} />
 
 <div class="flex h-full flex-col overflow-hidden min-w-0">
 
 	<div class="flex items-center gap-4 rounded-xl p-4 m-4 bg-pulse-white/5">
-		<i class="fa-solid fa-home text-violet-500 text-3xl"></i>
+		<i class="fa-solid text-3xl {remote.icon || 'fa-computer'}" style:color={Colors[remote.iconColor || 'accent']}></i>
 		<div class="flex-grow flex flex-col">
 			<h2 class="text-pulse-white/80 font-black tracking-wider text-xl">
-				{remote.name}
+				{remote.hostname}
 			</h2>
 			<i class="text-sm text-gray-600">{remote.address}:{remote.port}</i>
 		</div>
@@ -42,8 +95,8 @@ onDestroy(() => disconnectRemote(remote));
 	</div>
 
 	{#if activeTab == 'home'}
-		<Home />
+		<Home {onDownload} />
 	{:else}
-		<Library />
+		<Library {onDownload}/>
 	{/if}
 </div>

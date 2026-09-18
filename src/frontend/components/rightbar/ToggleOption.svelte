@@ -1,7 +1,7 @@
 <script>
 
 
-import ToggleButton from "../ui/ToggleButtonSmall.svelte";
+import ToggleButton from "../ui/controls/ToggleButtonSmall.svelte";
 
 export let title = '';
 export let enabled = false;

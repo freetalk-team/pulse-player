@@ -1,7 +1,5 @@
 <script>
 
-import { writable } from 'svelte/store';
-
 export let activeFilter = 'rating'; // default
 
 const options = [

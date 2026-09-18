@@ -4,43 +4,70 @@ import { onMount } from 'svelte';
 
 import { sleep } from './utils/sleep';
 
-import { pause, syncPlayerPrefs } from './stores/play';
-import { initLayout, isAppReady, isHidden, loadingMessage, currentLayout, modalConfig } from './stores/ui';
+import { pause, initPlayer } from './stores/play';
+import { initLayout, isAppReady, isHidden, loadingMessage, currentLayout, modalConfig, isDark } from './stores/ui';
 import { clearSelection, isTheaterMode } from './stores/selection';
 import { loadLibrary } from './stores/library';
 
+import { closeContextMenu } from './components/ui/ContextMenu.svelte';
 import Titlebar from './components/Titlebar.svelte';
 import Navbar from './components/Navbar.svelte';
 import Sidebar from './components/Sidebar.svelte';
 import Header from './components/Header.svelte';
+import HeaderCompact from './components/HeaderCompact.svelte';
 import Main from './components/Main.svelte';
 import Rightbar from './components/Rightbar.svelte';
 import Modal from './components/Modal.svelte';
 import LoadingSplash from './components/LoadingSplash.svelte';
 import VideoElement from './components/ui/Video.svelte';
+import Toast, { triggerToast } from './components/ui/Toast.svelte';
+import Onboarding from './Onboarding.svelte';
 
 let sidebarWidth = 300;
 let rightbarWidth = 240;
-
+let onboardingCompleted = true;
+let isMobile = false;
+let isDragging = false;
+let dragCounter = 0;
+let droppedPaths = []; // Temporary storage to pass to Scanne
 
 // Reactive widths: if Theater Mode is ON, force widths to 0
 $: currentSidebarWidth = ($isTheaterMode || $currentLayout === 'home') ? 0 : sidebarWidth;
 $: currentRightbarWidth = $isTheaterMode ? 0 : rightbarWidth;
 
+window.report = {
+	success(msg) { triggerToast(msg); },
+	error(msg)   { triggerToast(msg, 'error'); }
+};
+
+
+api.on('error', msg => triggerToast(msg, 'error'));
+	
 
 function onKeyDown(e) {
-	if (e.key === 'Alt') e.preventDefault();
+	if (e.key === 'Alt') {
+		e.preventDefault();
+	}
 	else if (e.key === 'Escape') {
+		closeContextMenu();
 		clearSelection();
 	}
 }
 
+function onWheel() {
+	closeContextMenu();
+}
+
 onMount(async () => {
+
+	let loading = true;
+
 	loadingMessage.set('Loading Preferences...');
 
+	await loadPreferences();
+
 	await Promise.all([
-		loadPreferences(),
-		syncPlayerPrefs(),
+		initPlayer(),
 		initLayout(),
 		sleep(800)
 	]);
@@ -48,6 +75,15 @@ onMount(async () => {
 	loadingMessage.set('Fetching Library...');
 
 	await loadLibrary();
+
+	const unsubscribeTheme = isDark.subscribe(dark => {
+		if (loading) return;
+
+		document.documentElement.classList.toggle('light-theme', !dark);
+		api.setPref('ui.theme', dark ? 'dark' : 'light');
+	});
+
+	loading = false;
 
 	if (isElectron) {
 		api.on('power-event', (event, type) => {
@@ -65,7 +101,7 @@ onMount(async () => {
 
 	document.addEventListener("visibilitychange", () => {
 		if (document.hidden) {
-			console.log('On hidden');
+			console.debug('On hidden');
 			// Optional: reduce visualizer FPS instead of pausing music
 		}
 
@@ -73,21 +109,37 @@ onMount(async () => {
 	});
 
 	isAppReady.set(true);
+
+	const mediaQuery = window.matchMedia('(max-width: 768px)');
+
+	const update = () => {
+		isMobile = mediaQuery.matches;
+	};
+
+	update();
+	mediaQuery.addEventListener('change', update);
+
+	return () => {
+		unsubscribeTheme();
+		mediaQuery.removeEventListener('change', update);
+	};
 });
 
 async function loadPreferences() {
 	const prefs = await api.getPrefs();
-	if (prefs) {
-		sidebarWidth = prefs.sidebarWidth ?? 300;
-		rightbarWidth = prefs.rightbarWidth ?? 240;
+	if (prefs?.ui) {
+		sidebarWidth = prefs.ui.sidebarWidth ?? 300;
+		rightbarWidth = prefs.ui.rightbarWidth ?? 240;
 		// Update any other local variables
+
+		const dark = prefs.ui.theme !== 'light';
+		document.documentElement.classList.toggle('light-theme', !dark);
+
+		isDark.set(dark);
 	}
+
+	onboardingCompleted = !prefs?.isFirstRun;
 }
-
-let isDragging = false;
-let dragCounter = 0;
-let droppedPaths = []; // Temporary storage to pass to Scanne
-
 
 function handleDragEnter(e) {
 	//if (!isElectron) return;
@@ -114,7 +166,7 @@ async function handleDrop(e) {
 	//if (!isElectron) return;
 	if (!e.dataTransfer.types.includes('Files')) return;
 
-	console.log('Drop event:', e.dataTransfer.types);
+	console.debug('Drop event:', e.dataTransfer.types);
 	
 	e.preventDefault();
 	isDragging = false;
@@ -124,20 +176,20 @@ async function handleDrop(e) {
 	// Use the new webUtils from your preload
 	droppedPaths = files.map(f => api.getPathForFile(f));
 	
-	console.log('Droped:', droppedPaths);
+	console.debug('Droped:', droppedPaths);
 	
 	api.scanFolders(droppedPaths);
 }
-
-
 
 </script>
 
 <svelte:window 
 	on:keydown={onKeyDown}
+	on:wheel={onWheel}
 />
 
 <VideoElement />
+<Toast />
 
 <!-- 1. Wrap the entire app in a flex-col container -->
 <div
@@ -165,30 +217,51 @@ async function handleDrop(e) {
 	{/if}
 
 	<!-- 2. Add Titlebar at the very top -->
-	<Titlebar />
+	{#if !isMobile}
+		<Titlebar {isDark} />
+	{/if}
 
 	<!-- 3. Your existing layout now sits below the Titlebar -->
 	<div class="flex flex-grow min-h-0 overflow-hidden">
 
 		{#if $isAppReady}
-		
-			<Navbar />
-			
-			<Sidebar
-				bind:droppedPaths
-				width={currentSidebarWidth}
-			/>
 
-			<section class="flex-grow flex flex-col min-w-0 ml-1">
-				<Header />
-				
-				<div class="flex flex-grow min-h-0">
-					<Main />
-					<Rightbar 
-						width={currentRightbarWidth} 
+			{#if !onboardingCompleted}
+
+				<Onboarding bind:complete={onboardingCompleted} />
+
+			{:else}
+		
+				{#if !isMobile}
+					<Navbar />
+					
+					<Sidebar
+						bind:droppedPaths
+						width={currentSidebarWidth}
 					/>
-				</div>
-			</section>
+				{/if}
+
+				<section 
+					class="flex-grow flex flex-col min-w-0"
+					class:ml-1={!isMobile}
+				>
+					{#if isMobile}
+						<HeaderCompact />
+					{:else}	
+						<Header />
+					{/if}
+					
+					<div class="flex flex-grow min-h-0">
+						<Main />
+
+						{#if !isMobile}
+							<Rightbar 
+								width={currentRightbarWidth} 
+							/>
+						{/if}
+					</div>
+				</section>
+			{/if}
 		{:else}
 			<LoadingSplash message={$loadingMessage} />
 		{/if}

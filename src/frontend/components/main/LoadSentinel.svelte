@@ -14,12 +14,12 @@ onMount(() => {
 	const observer = new IntersectionObserver(
 		
 		(entries) => {
+			console.debug('Sentinel loading:', isLoading, hasMore);
 			if (
 				entries[0].isIntersecting &&
 				!isLoading &&
 				hasMore
 			) {
-				console.log('Sentinel loading');
 				fetch();
 			}
 			

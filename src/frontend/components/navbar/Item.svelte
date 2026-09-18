@@ -1,12 +1,12 @@
 <script>
 
 import Tooltip from "../ui/Tooltip.svelte";
-
-import { capitlizeFirstLetter } from "../../utils/format";
+import Badge from "../ui/BadgeCircle.svelte";
 
 export let name;
 export let icon;
 export let active = false;
+export let notifications = 0;
 export let onClick;
 
 function handleClick() {
@@ -22,7 +22,13 @@ function handleClick() {
 	on:click={() => onClick(name)}
 >
 	<i class="fa-solid {icon}"></i>
-	<Tooltip title={capitlizeFirstLetter(name)} />
+	<Tooltip title={name.capitalizeFirstLetter()} />
+
+    {#if notifications > 0}
+        <div class="absolute -right-2 -top-4 w-3 h-3">
+            <Badge count={notifications} />
+        </div>
+    {/if}
 </button>
 
 <style>

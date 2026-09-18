@@ -1,9 +1,146 @@
-import path from 'path';
-// import ytdl from "ytdl-core";
+import { parse, basename } from 'path';
+
+// import ffmpeg from './ffmpeg';
+import ffmpeg from '@freetalk-team/pulse-player-ffmpeg';
+
+export class Track {
+
+
+	static isMedia(file) { return /\.(mp3|flac|ogg|m4a|mp4|mkv|webm)$/i.test(file); }
+	static isVideo(file) { return /\.(mp4|mkv|webm)$/i.test(file); }
+
+	static isValidAlbum(name) {
+		/*
+			\p{L} = any letter from any language
+			\p{N} = any numeric digit
+		*/
+		return /^[\p{L}\p{N} ()'-]+$/u.test(name)
+	}
+
+	static isValidArtist(name) {
+		return /^[\p{L}\p{N} '.]+$/u.test(name)
+	}
+
+	static info(path) {
+		const { name, ext } = parse(path);
+
+		return {
+			title: name,
+			type: Track.isVideo(ext) ? 'video' : 'audio',
+			filename: name,
+			path,
+
+			// albumHash() {
+			// 	const name = `${this.artist.toLowerCase()} - ${this.album.toLowerCase()}`;
+			// 	return name.hashCode();
+			// }
+		};
+	}
+
+	static meta(path) {
+		const track = typeof path == 'string' ? this.info(path) : path;
+
+		try {
+
+			// console.debug(typeof track.path, '=>', track.path);
+
+			// console.log(process.versions);
+			//const t0 = performance.now();
+			const info = ffmpeg.parseMeta(track.path);
+			//console.log(`parse: ${(performance.now() - t0).toFixed(2)} ms`);
+
+			// console.debug('Processing file:', track.path);
+			// console.debug('Parsed meta:', info);
+
+			track.duration = Math.ceil(info.duration);
+			track.bitrate = info.bitrate;
+			track.hash = info.contentHash;
+			track.size = info.size;
+
+			if (info.metadata) {
+
+				const meta = info.metadata;
+
+				track.title = (meta.title || track.title).strip().normalize();
+
+				if (meta.artist) {
+
+					if (Array.isArray(meta.artist)) {
+						if (meta.every(i => Track.isValidArtist(i)))
+							track.artist = meta.artist.map(i => normalize(i)).join(' ft. ');
+					}
+					else if (Track.isValidArtist(meta.artist)) {
+						track.artist = normalize(meta.artist);
+					}
+				}
+
+				if (meta.album && Track.isValidAlbum(meta.album))
+					track.album = normalize(meta.album);
+
+				if (track.album && track.artist) {
+
+					const year = meta.date || meta.year;
+
+					if (year) {
+						const match = year.match(/\d{4}/);
+						if (match) 
+							track.year = parseInt(match[0]);
+					}
+
+					const track_no = meta.track ?? meta.track_no;
+					track.no = track_no ? parseTrackNumber(track_no) : 0;
+				}
+
+				if (meta.cover) track.cover = meta.cover;
+				if (meta.tag)   track.tag = meta.tag;
+				if (meta.genre) track.genre = Array.isArray(meta.genre) ? meta.genre.join(' ') : meta.genre;
+			}
+		}
+		catch (e) {
+			console.error('Failed to parse track meta:', track.path, e);
+		}
+
+		return track;
+
+		function normalize(str) {
+			return str.strip().normalize().titleCase();
+		}
+
+		function parseTrackNumber(value) {
+			if (!value) return null;
+
+			const match = String(value).match(/^(\d+)/);
+			return match ? parseInt(match[1], 10) : null;
+		}
+	}
+
+	static update(path, info) {
+		return ffmpeg.updateMeta(path, info);
+	}
+
+	static youtubeId(filename) {
+		const m = name.match(/\[([a-zA-Z0-9_-]{11})\]$/) // youtube id
+		return m?.[1];
+	}
+
+	static generateThumb(path, outputPath, sec=10, maxWidth=400) {
+		try {
+
+			return ffmpeg.generateThumbnail(path, outputPath, sec, maxWidth);
+
+		}
+		catch (e) {
+			console.error('Failed to generate viode thumb:', e.message);
+			return false;
+		} 
+	}
+}
+
+
 
 function parseVideoTitle(filename) {
 
-	let name = path.parse(filename).name;
+	let name = parse(filename).name;
 
 	// remove [YouTubeID]
 	name = name.replace(/\[[a-zA-Z0-9_-]{11}\]/g, '');
@@ -62,7 +199,7 @@ function normalizeTitle(title) {
 
 function cleanVideoTitle(filename) {
 
-	let name = path.parse(filename).name;
+	let name = parse(filename).name;
 
 	// remove youtube id
 	name = name.replace(/\[[a-zA-Z0-9_-]{11}\]/g, '');
@@ -77,7 +214,7 @@ function cleanVideoTitle(filename) {
 }
 
 function cleanFilename(filename) {
-	let name = path.parse(filename).name;
+	let name = parse(filename).name;
 
 	// remove youtube id
 	name = name.replace(/\[[a-zA-Z0-9_-]{11}\]/g, "");
@@ -197,7 +334,7 @@ export function getMetaFromFilename(filename) {
 
 export function getMetaFromFilename2(filename) {
 
-	let name = path.parse(filename).name;
+	let name = parse(filename).name;
 
 	console.log('####', name);
 
@@ -306,7 +443,7 @@ export function splitByDashOutsideBrackets(str) {
 }
 
 function nameFromFilename(filename, fullname) {
-	let name = fullname ? path.parse(filename).name : filename;
+	let name = fullname ? parse(filename).name : filename;
 
 	// console.log('####', name);
 

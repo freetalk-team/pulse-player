@@ -1,7 +1,8 @@
 import { writable, derived } from 'svelte/store';
 
 export const editPlaylist = writable(null);
-export const activeTab = writable('all');
+export const activeTab = writable('track');
+export const selectedFilter = writable('all');
 
 export const collection = derived(
 	activeTab,

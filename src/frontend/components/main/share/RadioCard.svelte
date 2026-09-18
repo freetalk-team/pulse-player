@@ -1,0 +1,37 @@
+<script>
+
+import { formatLocationHtml } from '../../../utils/region';
+
+export let item;
+
+
+
+</script>
+
+<div class="flex gap-5 p-5">
+	<div class="h-32 w-32 bg-black/40 rounded-2xl">
+		{#if item.favicon}
+			<img
+				src={platform.resolve(item.favicon)}
+				alt=""
+				class="h-full w-full object-cover rounded-2xl"
+			/>
+		{:else}
+			<div class="w-full h-full flex items-center justify-center text-gray-800 rounded-2xl">
+				<i class="fa-solid fa-radio text-4xl"></i>
+			</div>
+		{/if}
+	</div>
+
+	<div class="flex min-w-0 flex-1 flex-col justify-start">
+		<h3 class="mb-2 truncate text-2xl font-bold text-pulse-white">
+			{item.name}
+		</h3>
+		<p class="text-xs uppercase tracking-wider text-gray-500">
+			{@html formatLocationHtml(item)}
+		</p>
+		<p class="mt-2 text-zinc-400 line-clamp-2">
+			{item.tags}
+		</p>
+	</div>
+</div>

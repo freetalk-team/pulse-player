@@ -1,0 +1,55 @@
+
+.card {
+
+    @apply relative rounded-lg p-3 transition-all cursor-pointer active:cursor-grabbing bg-pulse-white/5 border-transparent hover:bg-pulse-white/10;
+
+    &.selected {
+        @apply bg-pulse-accent/10 border-pulse-accent;
+    }
+
+    .actions {
+        @apply absolute top-1 right-1 z-20 flex items-center gap-1 px-1 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 rounded;
+
+        button {
+            @apply h-6 w-6 rounded-full flex items-center justify-center shadow-lg;
+
+            i {
+                @apply text-xs;
+            }
+        }
+    }
+
+    .thumb {
+        @apply relative aspect-square bg-black/40 rounded-lg overflow-hidden mb-3 shadow-inner;
+
+        img {
+            @apply w-full h-full object-cover group-hover:scale-105 transition-transform duration-500;
+        }
+
+        .icon {
+            @apply w-full h-full flex items-center justify-center text-gray-800;
+
+            i {
+                @apply text-6xl;
+            }
+        }
+    }
+
+    .preview {
+        @apply relative aspect-square grid grid-cols-2 grid-rows-2 gap-1 rounded-xl overflow-hidden bg-black/40 shadow-inner;
+    }
+
+    .overlay {
+        @apply absolute inset-0 bg-black/40 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center;
+
+        .button {
+            @apply w-12 h-12 bg-pulse-accent text-black rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform;
+        }
+    }
+
+
+    .badge-left {
+        @apply absolute -top-1 -left-1 z-20 text-black text-[10px] font-black px-1.5 py-0.5 rounded-full shadow-lg;
+    }
+}
+

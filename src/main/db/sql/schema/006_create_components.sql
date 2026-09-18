@@ -19,3 +19,13 @@ CREATE TABLE IF NOT EXISTS components (
 );
 
 --INSERT INTO sqlite_sequence (name, seq) VALUES ('<table name>', <value>)
+
+CREATE TRIGGER components_updated_at
+AFTER UPDATE ON components
+FOR EACH ROW
+WHEN NEW.updated_at = OLD.updated_at
+BEGIN
+    UPDATE components
+    SET updated_at = CURRENT_TIMESTAMP
+    WHERE id = NEW.id;
+END;

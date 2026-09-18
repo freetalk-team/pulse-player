@@ -9,7 +9,7 @@ export let icon = '';
 
 </script>
 
-<label class="text-2xl relative cursor-pointer group" 
+<label class="text-2xl relative group" 
 	use:tooltip={title + ($enabled ? ' Off' : ' On')}
 >
 	<input 

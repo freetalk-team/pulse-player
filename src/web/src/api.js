@@ -13,10 +13,9 @@ const api = {
 		return res.json();
 	}
 
-	, async getTracks(query) { 
+	, async queryTracks(query) { 
 		const params = new URLSearchParams(Object.clean(query));
 		const res = await fetch(`/api/tracks?${params.toString()}`);
-
 		return res.json();
 	}
 
@@ -24,53 +23,35 @@ const api = {
 		return db.latest('recent', 0, 200);
 	}
 
-	, updateLastPlayed(track) {
+	, updateLastPlayedTrack(track) {
 		track.played_at = new Date().toDateTimeString();
 		return db.put('recent', track)
 	}
 
-	, async getAlbums() { 
-		const res = await fetch('/api/library/album?limit=16');
-		return res.json();
-	}
+	, async queryAlbums(query) { return queryCollection('albums', query); }
 
 	, async getAlbumTracks(albumId) {
 		const res = await fetch(`/api/album/${albumId}/tracks`);
 		return res.json();
 	}
 
-	, async updateLastPlayedAlbum(albumId) {
+	, async updateLastPlayed() {
 	}
 
-	, async getPlaylists() { 
-		const res = await fetch('/api/library/playlist?limit=16');
-		const playlists = await res.json();
-
-		playlists.forEach(i => i.remote = true);
-
-		// todo: add local playlists
-
-		return playlists;
-	}
+	, async queryPlaylists(query) { return queryCollection('playlists', query); }
 
 	, async getPlaylistTracks(playlistId) {
 		const res = await fetch(`/api/playlist/${playlistId}/tracks`);
 		return res.json();
 	}
 
-	, async updateLastPlayedPlaylist(playlistId) {
-
-	}
 
 	, async getPlaysetMembers(playsetId) {
 		const res = await fetch(`/api/playlist/${playsetId}/tracks`);
 		return res.json();
 	}
 
-	, async getPlaysets() { 
-		const res = await fetch('/api/library/playset?limit=16');
-		return res.json();
-	}
+	, async queryPlaysets(query) { return queryCollection('playsets', query); }
 
 	, async getCollections(collections, query) {
 
@@ -90,16 +71,64 @@ const api = {
 		return items;
 	}
 
+	, async queryStations(query) {
+
+		delete query.favourite;
+
+		const params = new URLSearchParams(Object.clean(query));
+		const res = await fetch(`/api/stations?${params.toString()}`);
+		return res.json();
+	}
+
+	, async updateLastPlayedStation() {}
+	, async setStationFavourite() {}
+
 	, getComponents() { return [] }
 
 	, getPrefs() {
 		return prefs
 	}
 
+	, getPref(key, defaultValue) {
+		const parts = key.split('.');
+		let obj = prefs;
+
+		for (const p of parts) {
+			if (obj == null || typeof obj !== 'object' || !(p in obj)) {
+				return defaultValue;
+			}
+
+			obj = obj[p];
+		}
+
+		return obj;
+	}
+
 	, setPref(key, value) {
 		console.debug('[PREF]', key, value);
 
-		prefs[key] = value;
+		if (typeof key == 'string') {
+
+			const parts = key.split('.');
+			let obj = prefs;
+
+			for (let i = 0; i < parts.length - 1; i++) {
+				const p = parts[i];
+
+				if (typeof obj[p] !== 'object' || obj[p] === null) {
+					obj[p] = {};
+				}
+
+				obj = obj[p];
+			}
+
+			obj[parts[parts.length - 1]] = value;
+
+		}
+		else {
+			for (const [k, v] of Object.entries(key))
+				prefs[k] = v;
+		}
 
 		if (savePrefsTimeout)
 			clearTimeout(savePrefsTimeout);
@@ -113,6 +142,11 @@ const api = {
 	}
 }
 
+async function queryCollection(collection, query) {
+	const params = new URLSearchParams(Object.clean(query));
+	const res = await fetch(`/api/collection/${collection}?${params.toString()}`);
+	return res.json();
+}
 
 window.api = api;
 window.isElectron = false

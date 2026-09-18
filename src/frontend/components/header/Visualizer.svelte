@@ -1,97 +1,122 @@
 <script>
 
-import { onDestroy } from 'svelte';
-import { videoElement, isPlaying } from '../../stores/play';
+import { onMount, onDestroy } from 'svelte';
+
+import { isPlaying, analyserEnabled, getAnalyserData } from '../../stores/play';
 import { isHidden } from '../../stores/ui';
 
 export let width = 120;
 export let height = 24;
 
-let canvas, ctx, analyser, dataArray, audioCtx, frame;
+let canvas;
+let ctx;
+let frame = null;
 
-async function init() {
-	if (!$videoElement || !canvas || analyser || audioCtx) return;
-
-	const AudioContext = window.AudioContext || window.webkitAudioContext;
-	audioCtx = new AudioContext();
-	analyser = audioCtx.createAnalyser();
-	analyser.fftSize = 128; 
-	analyser.smoothingTimeConstant = 0.8; 
-
-	const source = audioCtx.createMediaElementSource($videoElement);
-	source.connect(analyser);
-	analyser.connect(audioCtx.destination);
-
-	dataArray = new Uint8Array(analyser.frequencyBinCount);
+onMount(() => {
 	ctx = canvas.getContext('2d');
-	
-	// If already playing when initialized, start rendering
-	if ($isPlaying) render();
+
+	if ($isPlaying && $analyserEnabled) {
+		startRender();
+	}
+});
+
+onDestroy(() => {
+	stopRender();
+});
+
+function startRender() {
+	if (frame) return;
+	frame = requestAnimationFrame(render);
+}
+
+function stopRender() {
+	if (frame) {
+		cancelAnimationFrame(frame);
+		frame = null;
+	}
+}
+
+function clear() {
+	ctx?.clearRect(0, 0, width, height);
 }
 
 function render() {
-	// 1. Safety check
-	if (!ctx || !analyser) return;
+	frame = null;
 
-	// 2. Handle AudioContext state
-	if (audioCtx?.state === 'suspended' && $isPlaying) audioCtx.resume();
-
-	// 3. STOP the loop if not playing
-	if (!$isPlaying || $isHidden) {
-		ctx.clearRect(0, 0, width, height);
-		cancelAnimationFrame(frame);
-		frame = null; // Clear the handle
-		return; 
+	if (!$isPlaying || !$analyserEnabled || $isHidden) {
+		clear();
+		return;
 	}
 
-	// 4. Single requestAnimationFrame call
+	const dataArray = getAnalyserData();
+
+	if (!dataArray) {
+		clear();
+		return;
+	}
+
+	draw(dataArray);
+
 	frame = requestAnimationFrame(render);
-	
-	analyser.getByteFrequencyData(dataArray);
+}
+
+function draw(dataArray) {
 	ctx.clearRect(0, 0, width, height);
 
 	const gradient = ctx.createLinearGradient(0, 0, 0, height);
 	gradient.addColorStop(0, 'transparent');
-	gradient.addColorStop(0.5, '#22c55e'); 
+	gradient.addColorStop(0.5, '#22c55e');
 	gradient.addColorStop(1, 'transparent');
 
-	const barCount = dataArray.length / 2;
+	const barCount = Math.floor(dataArray.length / 2);
 	const barWidth = width / barCount;
+
 	let x = 0;
 
+	ctx.fillStyle = gradient;
+
 	for (let i = 0; i < barCount; i++) {
-		const v = dataArray[i] / 255.0;
+		const v = dataArray[i] / 255;
 		const barHeight = v * height;
 		const y = (height - barHeight) / 2;
 
-		ctx.fillStyle = gradient;
 		if (barHeight < 2) {
-			ctx.fillRect(x, (height/2) - 1, barWidth - 1.5, 2);
+			ctx.fillRect(
+				x,
+				height / 2 - 1,
+				barWidth - 1.5,
+				2
+			);
 		} else {
 			ctx.beginPath();
-			ctx.roundRect(x, y, barWidth - 1.5, barHeight, 1);
+			ctx.roundRect(
+				x,
+				y,
+				barWidth - 1.5,
+				barHeight,
+				1
+			);
 			ctx.fill();
 		}
+
 		x += barWidth;
 	}
 }
 
-// 5. Reactive triggers
-$: if (canvas && $videoElement && !analyser) init();
-
-// Restart the loop only if it's not already running
-$: if ($isPlaying && analyser && !frame) render();
-
-onDestroy(() => {
-	if (frame) cancelAnimationFrame(frame);
-	if (audioCtx) audioCtx.close();
-});
+$: {
+	if (!$isPlaying || !$analyserEnabled || $isHidden) {
+		stopRender();
+		clear();
+	} else if (ctx && !frame) {
+		startRender();
+	}
+}
 
 </script>
 
-<canvas 
-	bind:this={canvas} 
-	{width} {height} 
+<canvas
+	bind:this={canvas}
+	{width}
+	{height}
 	class="opacity-80 drop-shadow-[0_0_8px_rgba(34,197,94,0.4)]"
-></canvas>
-
+/>
