@@ -10,24 +10,12 @@ permissions:
   contents: write
 
 jobs:
-
   build-windows-x64:
-    name: Build Windows x64
-    runs-on: ubuntu-24.04
-
-    container:
-      image: electronuserland/builder:wine
-      env:
-        WINEPREFIX: /tmp/wine
+    runs-on: windows-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Prepare Wine
-        run: |
-          mkdir -p "$WINEPREFIX"
-          wineboot --init
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
