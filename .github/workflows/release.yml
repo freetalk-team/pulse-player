@@ -10,6 +10,60 @@ permissions:
   contents: write
 
 jobs:
+  build-linux-x64:
+    name: Build Linux x64
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Linux x64
+        run: npm run build:linux -- --x64 --publish never
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-x64
+          path: dist/
+          if-no-files-found: error
+
+  build-linux-arm64:
+    name: Build Linux arm64
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Linux arm64
+        run: npm run build:linux -- --arm64 --publish never
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-arm64
+          path: dist/
+          if-no-files-found: error
+
   build-windows-x64:
     runs-on: windows-latest
 
@@ -36,18 +90,65 @@ jobs:
           path: dist/
           if-no-files-found: error
 
+  build-windows-arm64:
+    runs-on: windows-11-arm
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Windows ARM64
+        run: npm run build:win -- --arm64 --publish never
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-arm64
+          path: dist/
+          if-no-files-found: error
+  
   release:
     name: Create GitHub Release
     runs-on: ubuntu-24.04
 
     needs:
+      - build-linux-x64
+      - build-linux-arm64
       - build-windows-x64
+      - build-windows-arm64
 
     steps:
+      - name: Download Linux x64 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-x64
+          path: release
+
+      - name: Download Linux arm64 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-arm64
+          path: release
+
       - name: Download Windows x64 artifacts
         uses: actions/download-artifact@v4
         with:
           name: windows-x64
+          path: release
+
+      - name: Download Windows arm64 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-arm64
           path: release
 
       - name: Show release files
