@@ -70,6 +70,9 @@ jobs:
     name: Build Windows x64
     runs-on: ubuntu-24.04
 
+    container:
+      image: electronuserland/builder:wine
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -82,12 +85,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Install Wine
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wine64
-          wine --version
 
       - name: Build Windows x64
         run: npm run build:win -- --x64 --publish never
@@ -104,6 +101,9 @@ jobs:
     name: Build Windows arm64
     runs-on: ubuntu-24.04
 
+    container:
+      image: electronuserland/builder:wine
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -117,12 +117,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Wine
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wine64
-          wine --version
-
       - name: Build Windows arm64
         run: npm run build:win -- --arm64 --publish never
 
@@ -132,6 +126,7 @@ jobs:
           name: windows-arm64
           path: dist/
           if-no-files-found: error
+
 
   release:
     name: Create GitHub Release
