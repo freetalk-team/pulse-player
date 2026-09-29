@@ -8,6 +8,7 @@ import { pause, initPlayer } from './stores/play';
 import { initLayout, isAppReady, isHidden, loadingMessage, currentLayout, modalConfig, isDark } from './stores/ui';
 import { clearSelection, isTheaterMode } from './stores/selection';
 import { loadLibrary } from './stores/library';
+import { initRemote } from './stores/remote';
 
 import { closeContextMenu } from './components/ui/ContextMenu.svelte';
 import Titlebar from './components/Titlebar.svelte';
@@ -68,6 +69,7 @@ onMount(async () => {
 
 	await Promise.all([
 		initPlayer(),
+		initRemote(),
 		initLayout(),
 		sleep(800)
 	]);

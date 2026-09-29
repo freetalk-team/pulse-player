@@ -5,6 +5,7 @@ import { sleep } from "../utils/sleep";
 
 import { recent, queue, currentTrack, playNext } from "./play";
 
+export const remoteEnabled = writable(true);
 export const remotes = writable([]);
 export const currentRemote = writable(null);
 export const unread = writable(0);
@@ -81,6 +82,24 @@ currentRemote.subscribe(remote => {
 		unread.set(0);
 	}
 });
+
+export function initRemote() {
+	const remote = api.getPref('remoteEnabled', true);
+	remoteEnabled.set(remote);
+}
+
+export async function enableRemote(enable) {
+	console.debug('Enable remote:', enable);
+
+	await api.setPref('remoteEnabled', enable);
+	remoteEnabled.set(enable);
+
+	if (!enable) {
+		const lastLayout = api.getPref('ui.lastLayout');
+		if (lastLayout == 'remote')
+			api.setPref('ui.lastLayout', 'home');
+	}
+}
 
 export function connectRemote(remoteId) {
 	api.connectRemote(remoteId);

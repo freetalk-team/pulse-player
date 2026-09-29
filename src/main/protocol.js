@@ -6,6 +6,10 @@ import mime from 'mime-types';
 
 const CHUNK_SIZE = 2 * 1024 * 1024;
 
+const resolvePath = process.platform === 'win32'
+	? (path) => /^[a-zA-Z]\//.test(path) ? path[0].toUpperCase() + ':' + path.slice(1) : path
+	: (path) => path.startsWith('/') ? path : '/' + path;
+
 export function registerProtocols() {
 
 	protocol.registerSchemesAsPrivileged([
@@ -93,14 +97,14 @@ async function handleRequest(request) {
 	}
 }
 
-function resolvePath(path) {
+// function resolvePath(path) {
 
-	// path = resolver.resolve(path);
+// 	// path = resolver.resolve(path);
 
-	if (process.platform === 'linux') {
-		if (!path.startsWith('/'))
-			path = '/' + path;
-	}
+// 	if (process.platform === 'linux') {
+// 		if (!path.startsWith('/'))
+// 			path = '/' + path;
+// 	}
 
-	return path;
-}
+// 	return path;
+// }

@@ -20,7 +20,7 @@ const platform = {
 
 		console.debug('Play stream:', path);
 
-		if (path instanceof FileSystemFileHandle) {
+		if (typeof FileSystemFileHandle !== 'undefined' && path instanceof FileSystemFileHandle) {
 			const file = await path.getFile();
 
 			url = URL.createObjectURL(file);
@@ -39,8 +39,6 @@ const platform = {
 		element.src = url;
 
 		return element.play();
-
-		
 	},
 
 	async resolveStreamUrl(url) {

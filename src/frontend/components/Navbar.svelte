@@ -5,6 +5,7 @@ import logo from '@resources/icon.png?asset';
 import { onMount } from 'svelte';
 import { currentLayout } from '../stores/ui';
 import { trackCount } from '../stores/library';
+import { remoteEnabled } from '../stores/remote';
 
 import Item from './navbar/Item.svelte';
 
@@ -42,7 +43,9 @@ function handleChange(name) {
 	<Item name={'radio'} active={$currentLayout === 'radio'} icon={'fa-radio'} onClick={handleChange} />
 
 	{#if __PLATFORM__ === 'desktop'}
-		<Item name={'remote'} active={$currentLayout === 'remote'} icon={'fa-share-nodes'} notifications={unread} onClick={handleChange} />
+		{#if $remoteEnabled}
+			<Item name={'remote'} active={$currentLayout === 'remote'} icon={'fa-share-nodes'} notifications={unread} onClick={handleChange} />
+		{/if}
 		<div class="flex-grow"></div>
 		<Item name={'settings'} active={$currentLayout === 'settings'} icon={'fa-gear'} onClick={handleChange} />
 	{/if}

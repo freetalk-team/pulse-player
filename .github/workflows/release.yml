@@ -1,0 +1,212 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux-x64:
+    name: Build Linux x64
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --os=linux --cpu=x64
+
+      - name: Build Linux x64
+        run: npm run build:linux -- --x64
+
+      # - name: Normalize artifact names
+      #   shell: bash
+      #   run: |
+      #     mv dist/pulse-player-*.AppImage \
+      #       dist/pulse-player-linux-x64.AppImage
+
+      #     mv dist/pulse-player-*.deb \
+      #       dist/pulse-player-linux-x64.deb
+
+      #     mv dist/pulse-player-*.tar.gz \
+      #       dist/pulse-player-linux-x64.tar.gz
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-x64
+          path: dist/
+          if-no-files-found: error
+
+
+  build-linux-arm64:
+    name: Build Linux arm64
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --os=linux --cpu=arm64
+
+      - name: Build Linux arm64
+        run: npm run build:linux -- --arm64
+
+      # - name: Normalize artifact names
+      #   shell: bash
+      #   run: |
+      #     mv dist/pulse-player-*.AppImage \
+      #       dist/pulse-player-linux-arm64.AppImage
+
+      #     mv dist/pulse-player-*.deb \
+      #       dist/pulse-player-linux-arm64.deb
+
+      #     mv dist/pulse-player-*.tar.gz \
+      #       dist/pulse-player-linux-arm64.tar.gz
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-arm64
+          path: dist/
+          if-no-files-found: error
+
+
+  build-windows-x64:
+    name: Build Windows x64
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --os=win32 --cpu=x64
+
+      - name: Build Windows x64
+        run: npm run build:win -- --x64
+
+      # - name: Normalize artifact names
+      #   shell: bash
+      #   run: |
+      #     mv dist/pulse-player-*-setup.exe \
+      #       dist/pulse-player-windows-x64-setup.exe
+
+      #     mv dist/pulse-player-*.zip \
+      #       dist/pulse-player-windows-x64.zip
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64
+          path: dist/
+          if-no-files-found: error
+
+
+  build-windows-arm64:
+    name: Build Windows arm64
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --os=win32 --cpu=arm64
+
+      - name: Build Windows arm64
+        run: npm run build:win -- --arm64
+
+      # - name: Normalize artifact names
+      #   shell: bash
+      #   run: |
+      #     mv dist/pulse-player-*-setup.exe \
+      #       dist/pulse-player-windows-arm64-setup.exe
+
+      #     mv dist/pulse-player-*.zip \
+      #       dist/pulse-player-windows-arm64.zip
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-arm64
+          path: dist/
+          if-no-files-found: error
+
+
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-24.04
+
+    needs:
+      - build-linux-x64
+      - build-linux-arm64
+      - build-windows-x64
+      - build-windows-arm64
+
+    steps:
+      - name: Download Linux x64 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-x64
+          path: release
+
+      - name: Download Linux arm64 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-arm64
+          path: release
+
+      - name: Download Windows x64 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-x64
+          path: release
+
+      - name: Download Windows arm64 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-arm64
+          path: release
+
+      - name: Show release files
+        run: |
+          echo "Release files:"
+          ls -lh release
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: release/*
+          generate_release_notes: true

@@ -27,6 +27,6 @@ export let onDownload;
 	{/if}
 {/if}
 
-<div class="prose prose-invert max-w-none">
+<div class="prose dark:prose-invert max-w-none">
 	{@html markdown(post.content)}
 </div>

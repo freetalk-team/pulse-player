@@ -87,11 +87,6 @@ export function startApp() {
 		return;
 	}
 
-	createServer().then(s => {
-		server = s
-
-	})
-
 	
 	// Set app user model id for windows
 	electronApp.setAppUserModelId('io.sipme.pulseplayer')
@@ -128,6 +123,10 @@ export function startApp() {
 
 	setupIpcHandlers(handler);
 	setupEventHandlers(handler);
+
+	createServer().then(s => {
+		server = s
+	});
 
 	discovery.startServer();
 	discovery.startClient(handler);
@@ -197,7 +196,7 @@ export function startApp() {
 	app.on('window-all-closed', async () => {
 
 		if (server) {
-			await server.close();
+			await server.stop();
 		}
 
 		if (process.platform !== 'darwin') {

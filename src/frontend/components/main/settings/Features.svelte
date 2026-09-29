@@ -35,6 +35,8 @@ $: isValidFormat = /^PP-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(activationKey
 
 onMount(async () => {
 	features = await api.getFeatures();
+
+	console.debug('Loaded features:', features);
 });
 
 async function handleActivationSubmit() {
@@ -52,15 +54,28 @@ async function handleActivationSubmit() {
 		sleep(2000)
 	]);
 
+	console.debug('Features activation result:', result);
+
 	if (result.success) {
 		activationStatus = 'success';
-		features = result.features;
+		activationKey = '';
+
+		const activatedFeatures = result.features;
+
+		features = features.map(feature => activatedFeatures.includes(feature.id)
+			? { ...feature, enabled: true }
+			: feature
+		);
 	} else {
 		activationStatus = 'error';
 		errorMessage = result.message;
 	}
 
 	isActivating = false;
+}
+
+function hasLockedFeatures(features) {
+	return features.some(i => !i.enabled);
 }
 	
 </script>
@@ -92,9 +107,8 @@ async function handleActivationSubmit() {
 			{/each}
 		</div>
 
-		{#if features.length < 3}
-		<div class="space-y-2 pt-5">
-			{#if activationStatus !== 'success'}
+		{#if hasLockedFeatures(features)}
+			<div class="space-y-2 pt-5">
 				<div transition:slide={{ duration: 150 }} class="grid grid-cols-1 md:grid-cols-2 gap-3">
 					<div class="flex flex-col gap-1.5 text-left relative">
 						<label class="text-[11px] font-bold uppercase tracking-wider text-zinc-400" for="pro-key">Already purchased a key?</label>
@@ -118,41 +132,40 @@ async function handleActivationSubmit() {
 						</a>
 					</div>
 				</div>
-			{/if}
 
-			<!-- Server Error Notice Bar Banner -->
-			{#if activationStatus === 'error'}
-				<div transition:slide={{ duration: 150 }} class="mt-2 p-2.5 bg-red-500/10 border border-red-500/20 rounded-xl text-left flex items-center gap-2 text-xs text-red-400 font-medium">
-					<i class="fa-solid fa-triangle-exclamation text-sm"></i>
-					<span>{errorMessage}</span>
-				</div>
-			{/if}
+				<!-- Server Error Notice Bar Banner -->
+				{#if activationStatus === 'error'}
+					<div transition:slide={{ duration: 150 }} class="mt-2 p-2.5 bg-red-500/10 border border-red-500/20 rounded-xl text-left flex items-center gap-2 text-xs text-red-400 font-medium">
+						<i class="fa-solid fa-triangle-exclamation text-sm"></i>
+						<span>{errorMessage}</span>
+					</div>
+				{/if}
 
-			<div class="footer mt-4">
-				<button
-					class="btn-primary transition-all duration-200"
-					class:bg-amber-600={isKeyTyped && isValidFormat}
-					class:hover:bg-amber-500={isKeyTyped && isValidFormat}
-					class:bg-zinc-800={isKeyTyped && !isValidFormat}
-					class:text-zinc-500={isKeyTyped && !isValidFormat}
-					class:cursor-not-allowed={isKeyTyped && !isValidFormat || isActivating}
-					disabled={(isKeyTyped && !isValidFormat) || isActivating}
-					on:click={handleActivationSubmit}
-				>
-					{#if isActivating}
-						Verifying Key...
-					{:else if isKeyTyped}
-						{#if isValidFormat}
-							Activate Pro
+				<div class="footer mt-4">
+					<button
+						class="btn-primary transition-all duration-200"
+						class:bg-amber-600={isKeyTyped && isValidFormat}
+						class:hover:bg-amber-500={isKeyTyped && isValidFormat}
+						class:bg-zinc-800={isKeyTyped && !isValidFormat}
+						class:text-zinc-500={isKeyTyped && !isValidFormat}
+						class:cursor-not-allowed={isKeyTyped && !isValidFormat || isActivating}
+						disabled={(isKeyTyped && !isValidFormat) || isActivating}
+						on:click={handleActivationSubmit}
+					>
+						{#if isActivating}
+							Verifying Key...
+						{:else if isKeyTyped}
+							{#if isValidFormat}
+								Activate Pro
+							{:else}
+								Invalid License Key Pattern
+							{/if}
 						{:else}
-							Invalid License Key Pattern
+							Activate Pro
 						{/if}
-					{:else}
-						Activate Pro
-					{/if}
-				</button>
+					</button>
+				</div>
 			</div>
-		</div>
 
 		{/if}
 	</div>

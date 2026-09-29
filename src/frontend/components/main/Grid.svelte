@@ -41,7 +41,8 @@ function openContextMenu(e, item, content) {
 	<ContextMenu pos={contextPos} item={contextItem} content={contextMenuContent} close={closeContextMenu} />
 {/if}
 
-<div class="grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4 md:gap-6">
+<!-- <div class="grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4 md:gap-6 max-w-[1800px] mx-auto"> -->
+<div class="grid grid-cols-2 md:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4 md:gap-6">
 	{#each items as item (item.id)}
 		<div in:fade={{ duration: 400 }}>
 			<svelte:component

@@ -7,6 +7,7 @@ import cors from '@fastify/cors';
 
 import { app } from 'electron';
 
+import { events } from '../events';
 import store from '../store';
 
 import websocketRoutes from './routes/ws';
@@ -25,70 +26,112 @@ const webRoot = app.isPackaged
     ? path.join(process.resourcesPath, 'web')
     : path.join(process.cwd(), 'resources', 'web');
 
-export async function createServer() {
-	const server = Fastify({
-		logger: !app.isPackaged
-	});
+class Server {
 
-	await server.register(cors, {
-		origin: true
-	});
+	#fastify;
 
-	// app.decorate('events', {
-	// 	onPostCreated: async (post) => {
-	// 		console.log('Post created:', post);
-	// 	}
-	// });
+	async start() {
+		if (this.#fastify) return;
 
-	// WebSocket support
-	await server.register(websocket);
-
-	await server.register(fastifyStatic, {
-		root: webRoot,
-		prefix: '/'
-	});
-
-	server.setNotFoundHandler((req, reply) => {
-		reply.sendFile('index.html');
-	});
-
-	// Simple HTTP route
-	server.get('/api/ping', async () => {
-		return {
-			ok: true,
-			time: Date.now()
-		};
-	});
-
-	await server.register(websocketRoutes, { prefix: '/ws' });
-
-	await Promise.all([
-		server.register(tracksRoutes, { prefix: '/api/tracks' }),
-		server.register(albumRoutes, { prefix: '/api/album' }),
-		server.register(playlistRoutes, { prefix: '/api/playlist' }),
-		server.register(collectionRoutes, { prefix: '/api/collection' }),
-		server.register(libraryRoutes, { prefix: '/api/library' }),
-		server.register(postRoutes, { prefix: '/api/post' }),
-		server.register(radioRoutes, { prefix: '/api/stations' })
-	]);
-	
-	await server.register(mediaRoutes);
-
-	const port = store.port;
-
-	try {
-		// Start server
-		await server.listen({
-			host: '0.0.0.0',
-			port
+		const fastify = Fastify({
+			logger: !app.isPackaged
 		});
 
-		const addresses = server.addresses();
+		await fastify.register(cors, {
+			origin: true
+		});
 
-		console.log('[HTTP] started:', port, addresses.map(i => i.address));
+		// app.decorate('events', {
+		// 	onPostCreated: async (post) => {
+		// 		console.log('Post created:', post);
+		// 	}
+		// });
+
+		// WebSocket support
+		await fastify.register(websocket);
+
+		await fastify.register(fastifyStatic, {
+			root: webRoot,
+			prefix: '/'
+		});
+
+		fastify.setNotFoundHandler((req, reply) => {
+			reply.sendFile('index.html');
+		});
+
+		// Simple HTTP route
+		fastify.get('/api/ping', async () => {
+			return {
+				ok: true,
+				time: Date.now()
+			};
+		});
+
+		await fastify.register(websocketRoutes, { prefix: '/ws' });
+
+		await Promise.all([
+			fastify.register(tracksRoutes, { prefix: '/api/tracks' }),
+			fastify.register(albumRoutes, { prefix: '/api/album' }),
+			fastify.register(playlistRoutes, { prefix: '/api/playlist' }),
+			fastify.register(collectionRoutes, { prefix: '/api/collection' }),
+			fastify.register(libraryRoutes, { prefix: '/api/library' }),
+			fastify.register(postRoutes, { prefix: '/api/post' }),
+			fastify.register(radioRoutes, { prefix: '/api/stations' })
+		]);
+		
+		await fastify.register(mediaRoutes);
+
+		const port = store.port;
+
+		try {
+			// Start server
+			await fastify.listen({
+				host: '0.0.0.0',
+				port
+			});
+
+			const addresses = fastify.addresses();
+
+			console.log('[HTTP] started:', port, addresses.map(i => i.address));
+
+			this.#fastify = fastify;
+		}
+		catch (e) {
+			console.error('[HTTP] failed to start server:', e.message);
+
+			events.emit('error', 'Failed to start HTTP server');
+		}
 	}
-	catch (e) {
-		console.error('[HTTP] failed to start server:', e.message);
+
+	async stop() {
+		if (!this.#fastify) return;
+
+		try {
+			await this.#fastify.close();
+			
+		}
+		catch (e) {
+			console.error('[HTTP] Failed to stop server:', e.message);
+		}
+		finally {
+			this.#fastify = null;
+		}
+	}
+}
+
+export async function createServer() {
+
+	const server = new Server;
+
+	const enabled = store.registerListener('remoteEnabled', (enable) => {
+		if (enable) 
+			server.start();
+		else
+			server.stop();
+	});
+
+	if (enabled) {
+		await server.start();
 	}
 
 	return server;

@@ -208,19 +208,12 @@ const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0
 @reference "../../../assets/main.css";
 
 .container {
-	@apply w-full bg-zinc-950 border flex items-center justify-between px-3 h-[38px] rounded-xl transition-all duration-200 cursor-text;
+	@apply w-full bg-zinc-950 light:bg-zinc-300 border flex items-center justify-between px-3 h-[38px] rounded-xl transition-all duration-200 cursor-text;
 }
 
-:global(.light-theme) .container {
-	@apply bg-zinc-300;
-}
 
 .container .input-area {
-	@apply flex items-center font-mono text-sm tracking-wide text-zinc-200 select-all;
-}
-
-:global(.light-theme) .container .input-area {
-	@apply text-zinc-950;
+	@apply flex items-center font-mono text-sm tracking-wide text-zinc-200 light:text-zinc-950 select-all;
 }
 
 .container .input-area input {
@@ -253,11 +246,10 @@ input::-webkit-inner-spin-button {
 }
 
 .dropdown .section > p {
-	@apply text-[9px] font-black tracking-wider text-zinc-600 uppercase sticky top-0 bg-zinc-950 py-1 z-20 rounded-md mb-1;
-}
-
-:global(.light-theme) .dropdown .section > p {
-	@apply bg-zinc-400 text-zinc-950;
+	@apply text-[9px] font-black tracking-wider uppercase sticky top-0 py-1 z-20 rounded-md mb-1
+		bg-zinc-950 text-zinc-600
+		light:bg-zinc-400 light:text-zinc-950
+	;
 }
 
 .dropdown .section > button {
@@ -265,11 +257,9 @@ input::-webkit-inner-spin-button {
 }
 
 .dropdown .section > button.item {
-	@apply text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200; 
-}
-
-:global(.light-theme) .dropdown .section > button.item {
-	@apply text-zinc-600 hover:bg-zinc-400 hover:text-zinc-950;
+	@apply text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200
+		light:text-zinc-600 light:hover:bg-zinc-400 light:hover:text-zinc-950
+	; 
 }
 
 </style>

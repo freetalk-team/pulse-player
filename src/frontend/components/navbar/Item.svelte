@@ -1,5 +1,7 @@
 <script>
 
+import { fade } from "svelte/transition";
+
 import Tooltip from "../ui/Tooltip.svelte";
 import Badge from "../ui/BadgeCircle.svelte";
 
@@ -17,8 +19,8 @@ function handleClick() {
 
 </script>
 
-<button 
-	class="nav-item relative group {active ? 'active' : ''}" 
+<button class="nav-item relative group {active ? 'active' : ''}"
+    in:fade={{ duration: 400 }}
 	on:click={() => onClick(name)}
 >
 	<i class="fa-solid {icon}"></i>

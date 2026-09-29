@@ -1,6 +1,5 @@
 import { defineConfig } from 'electron-vite'
 import { join, resolve } from 'path'
-import { execSync } from "node:child_process";
 
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import tailwindcss from '@tailwindcss/vite'

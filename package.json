@@ -1,6 +1,6 @@
 {
   "name": "pulse-player",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "description": "Modern, lightweight media player",
   "appname": "Pulse Player",
   "nsd": "pulseplayer",
@@ -21,6 +21,12 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/freetalk-team/pulse-player.git"
+  },
+  "donations": {
+    "buymeacoffee": "https://buymeacoffee.com/freetalkteam",
+    "github": "https://github.com/sponsors/freetalk-team",
+    "stripe": "https://buy.stripe.com/3cIdR26y45REeZm4jcgEg01",
+    "bitcoin": "BC1QDP8JCFTZAAGH8D0X59DXGZK8KGL4ER0UUAXPTG"
   },
   "config": {
     "port": "4321"

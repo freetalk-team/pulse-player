@@ -1,0 +1,41 @@
+name: Build Windows arm64
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-windows-arm64:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --os=win32 --cpu=arm64
+
+      - name: Build Windows arm64
+        run: npm run build:win -- --arm64
+
+      # - name: Normalize artifact names
+      #   shell: bash
+      #   run: |
+      #     mv dist/pulse-player-*-setup.exe \
+      #       dist/pulse-player-windows-arm64-setup.exe
+
+      #     mv dist/pulse-player-*.zip \
+      #       dist/pulse-player-windows-arm64.zip
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-arm64
+          path: dist/
+          if-no-files-found: error
+

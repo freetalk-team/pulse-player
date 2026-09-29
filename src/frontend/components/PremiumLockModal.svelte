@@ -23,11 +23,7 @@ export function runPremiumAction(feature) {
 
 import { scale, fade } from 'svelte/transition';
 
-import pkg from '@pkg';
-
-// export let isOpen = false;
-// export let featureId = 1; // 1 = Meta, 2 = Download, 3 = Radio
-// export let onClose = () => {};
+const FEATURES_PAGE_URL = import.meta.env.VITE_FEATIRES_URL;
 
 // Feature dictionary mapping to your specific pro modules
 const premiumFeatures = {
@@ -52,7 +48,7 @@ $: activeFeature = premiumFeatures[$lockedFeatureTarget] || premiumFeatures[1];
 
 function handleUpgradeClick() {
     if (api.openExternal) {
-        api.openExternal(`${pkg.homepage}/features`);
+        api.openExternal(FEATURES_PAGE_URL);
     }
 
     lockedFeatureTarget.set(null);
@@ -72,7 +68,7 @@ function handleClose() {
     <div 
         transition:fade={{ duration: 150 }} 
         class="fixed inset-0 bg-black/70 backdrop-blur-sm z-60 flex items-center justify-center p-4"
-        on:click|self={onClose}
+        on:click|self={handleClose}
     >
         <!-- Modal Card Container -->
         <div 

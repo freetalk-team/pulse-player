@@ -50,8 +50,8 @@ async function toggleComments() {
 
 </script>
 
-<div in:fade={{duration: 800}} class="group min-w-0 px-5 py-2 flex flex-col space-y-6 rounded-xl bg-black/20 border-1 border-pulse-white/10 backdrop-blur">
-	<div class="flex items-center border-b-1 border-gray-600/20 gap-4">
+<div in:fade={{duration: 800}} class="group min-w-0 px-5 py-2 flex flex-col space-y-6 panel">
+	<div class="flex items-center border-b-1 border-pulse-zinc-700 gap-4">
 		<h2 class="flex-grow p-1 uppercase text-gray-500 font-semibold tracking-wider">{post.type}</h2>
 		{#if !onDownload}
 			<button 
@@ -74,18 +74,18 @@ async function toggleComments() {
 	{/if}
 
 	<!-- Footer -->
-	<div class="flex flex-col px-4 py-3 border-t border-zinc-800">
+	<div class="flex flex-col px-4 py-3 border-t border-pulse-zinc-700">
 
 		<div class="flex items-center gap-4">
 			<button
-				class="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition"
+				class="flex items-center gap-2 text-sm text-zinc-400 hover:text-pulse-white transition"
 				on:click={toggleLike}
 			>
 				<i class="{post.reaction ? 'fa-solid text-blue-400' : 'fa-regular'} fa-thumbs-up"></i>
 				<span>{post.reaction_count || 0}</span>
 			</button>
 			<button
-				class="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition"
+				class="flex items-center gap-2 text-sm text-zinc-400 hover:text-pulse-white transition"
 				on:click={toggleComments}
 			>
 				<i class="fa-regular fa-comment"></i>

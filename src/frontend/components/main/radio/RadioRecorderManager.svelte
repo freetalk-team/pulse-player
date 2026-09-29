@@ -323,29 +323,25 @@ button.tab {
 }
 
 .date-picker {
-	@apply flex items-center bg-zinc-950 border border-zinc-800/60 p-0.5 rounded-xl gap-0.5 shadow-inner;
-}
-
-:global(.light-theme) .date-picker {
-	@apply bg-zinc-200 border-zinc-400/60;
+	@apply flex items-center p-0.5 rounded-xl gap-0.5 shadow-inner
+		bg-zinc-950 border border-zinc-800/60
+		light:bg-zinc-200 light:border-zinc-400/60
+		;
 }
 
 .date-picker button {
-	@apply w-8 h-8 rounded-lg hover:bg-zinc-900 text-zinc-400 hover:text-zinc-200 active:text-pulse-white transition-colors flex items-center justify-center focus:outline-none;
+	@apply w-8 h-8 rounded-lg active:text-pulse-white transition-colors flex items-center justify-center focus:outline-none
+		hover:bg-zinc-900 text-zinc-400 hover:text-zinc-200
+		light:hover:bg-zinc-300 light:text-zinc-800 light:hover:text-zinc-500
+		;
 }
-
-:global(.light-theme) .date-picker button {
-	@apply hover:bg-zinc-300 text-zinc-800 hover:text-zinc-500;
-}
-
 
 /* Local Atomic form helper elements matched to base app layouts */
 .form-input {
-	@apply w-full bg-zinc-950 border border-zinc-800/80 rounded-xl px-3 py-2 text-xs text-zinc-200 placeholder:text-zinc-700 focus:outline-none focus:border-purple-500 transition-colors h-[38px];
-}
-
-:global(.light-theme) .form-input {
-	@apply bg-zinc-300/30 text-zinc-950 placeholder:text-zinc-600;
+	@apply w-full rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-purple-500 transition-colors h-[38px] border border-zinc-800/80
+		bg-zinc-950 text-zinc-200 placeholder:text-zinc-700
+		light:bg-zinc-300/30 light:text-zinc-950 light:placeholder:text-zinc-600
+	;
 }
 
 /* Input overrides specifically targeting chromium date/time picker modules */
@@ -367,77 +363,44 @@ button.tab {
 
 .container {
 	@apply w-full h-full flex flex-col border rounded-2xl shadow-xl overflow-hidden min-h-0 select-none
-		bg-zinc-900/60 border-zinc-800 text-zinc-100
+		bg-zinc-900/60 border-zinc-800 text-zinc-100 
+		light:bg-zinc-100/10 light:border-zinc-600/60 light:text-zinc-400
 		;
-}
-
-:global(.light-theme) .container {
-	@apply bg-zinc-100/10 border-zinc-600/60 text-zinc-400;
 }
 
 .container .header {
 	@apply p-5 border-b border-zinc-800/80 flex items-center justify-between
-		bg-zinc-950/60 border-zinc-800/80
+		bg-zinc-950/60 border-zinc-800/80 light:bg-zinc-300/40 light:border-zinc-700/60
 		;
 }
 
-:global(.light-theme) .container .header {
-	@apply bg-zinc-300/40 border-zinc-700/60;
-}
-
 .container .main {
-	@apply flex-1 overflow-y-auto p-5 space-y-2.5 min-h-0 bg-zinc-900/30;
-}
-
-:global(.light-theme) .container .main {
-	@apply bg-zinc-200/30;
+	@apply flex-1 overflow-y-auto p-5 space-y-2.5 min-h-0 bg-zinc-900/30 light:bg-zinc-200/30;
 }
 
 .container .drawer {
-	@apply bg-zinc-950/30 border-b border-zinc-800/60 p-5 space-y-4;
+	@apply bg-zinc-950/30 border-b border-zinc-800/60 light:bg-zinc-400/30 p-5 space-y-4 ;
 }
 
-:global(.light-theme) .container .drawer {
-	@apply bg-zinc-400/30;
-}
 .repeat {
-	@apply bg-zinc-950 border border-zinc-800 shadow-inner rounded-xl;
-}
-
-:global(.light-theme) .repeat {
-	@apply bg-zinc-300 border-zinc-500;
+	@apply bg-zinc-950 border border-zinc-800 light:bg-zinc-300 light:border-zinc-500 shadow-inner rounded-xl;
 }
 
 .repeat > button {
-	@apply text-zinc-400 hover:text-zinc-200 font-medium rounded-lg transition-all focus:outline-none;
-}
-
-:global(.light-theme) .repeat > button {
-	@apply text-zinc-700 hover:text-zinc-500;
+	@apply text-zinc-400 hover:text-zinc-200 light:text-zinc-700 light:hover:text-zinc-500 font-medium rounded-lg transition-all focus:outline-none;
 }
 
 .repeat > button.selected {
-	@apply bg-purple-600 text-pulse-white shadow-sm;
-}
-
-:global(.light-theme) .repeat > button.selected {
-	@apply hover:text-zinc-700;
+	@apply bg-purple-600 text-pulse-white light:hover:text-zinc-700 shadow-sm;
 }
 
 button.primary {
-	@apply bg-purple-600 hover:bg-purple-500 disabled:bg-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed font-semibold text-pulse-white rounded-lg text-xs transition-all shadow-md;
-}
-
-:global(.light-theme) button.primary {
-	@apply disabled:bg-zinc-400 disabled:text-zinc-600;
+	@apply bg-purple-600 hover:bg-purple-500 disabled:bg-zinc-800 disabled:text-zinc-600 light:disabled:bg-zinc-400 light:disabled:text-zinc-600 disabled:cursor-not-allowed font-semibold text-pulse-white rounded-lg text-xs transition-all shadow-md;
 }
 
 button.discard {
-	@apply text-xs text-zinc-400 hover:text-zinc-200 transition-colors;
+	@apply text-xs text-zinc-400 hover:text-zinc-200 light:text-zinc-600 light:hover:text-zinc-400 transition-colors;
 }
 
-:global(.light-theme) button.discard {
-	@apply text-zinc-600 hover:text-zinc-400;
-}
 
 </style>

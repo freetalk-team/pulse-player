@@ -2,6 +2,7 @@
 
 import { fade } from "svelte/transition";
 
+import Remote from "./general/Remote.svelte";
 import Radio from "./general/Radio.svelte";
 import Downloads from "./general/Downloads.svelte";
 import Import from "./general/Import.svelte";
@@ -18,6 +19,7 @@ import Database from "./general/Database.svelte";
 	</h1>
 
 	<div class="max-w-4xl mx-auto px-6 py-8 flex flex-col gap-8 w-full">
+		<Remote />
 		<Radio />
 		<Import />
 		<Downloads />

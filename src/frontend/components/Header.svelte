@@ -83,30 +83,23 @@ $: extraStyles = $currentLayout === 'home'
 
 @reference "../assets/main.css";
 
+
 .header {
-	@apply relative
+	@apply relative rounded-bl-lg border-b
 		bg-[rgba(255,255,255,0.08)]
-		border-b
 		border-b-[rgba(255,255,255,0.1)]
 		shadow-[0_30px_60px_rgba(0,0,0,0.95)]
-		rounded-bl-lg;
+		light:bg-[rgba(180,180,180,0.6)]
+		light:border-b-[rgba(0,0,0,0.1)]
+		light:shadow-[0_30px_60px_rgba(0,0,0,0.15)]
+		;
 }
 
 .header::after {
 	content: '';
-	@apply absolute
-		-bottom-5
-		left-0
-		right-0
-		h-5
+	@apply absolute -bottom-5 left-0 right-0 h-5 pointer-events-none
 		bg-[linear-gradient(to_bottom,rgba(0,0,0,0.25)_0%,rgba(0,0,0,0.12)_40%,transparent_100%)]
-		pointer-events-none;
-}
-
-:global(.light-theme) .header {
-	@apply bg-[rgba(180,180,180,0.6)]
-		border-b-[rgba(0,0,0,0.1)]
-		shadow-[0_30px_60px_rgba(0,0,0,0.15)];
+		;
 }
 
 :global(.light-theme) .header::after {

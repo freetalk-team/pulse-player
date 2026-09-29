@@ -8,6 +8,7 @@ import MobileScreenShot from '@resources/mobile-app-screenshot.png?asset';
 import { sleep } from './utils/sleep';
 import { importProgress, isImporting, scanFolders } from './stores/import';
 import { isDark } from './stores/ui';
+import { enableRemote } from './stores/remote';
 
 import { Colors } from './components/ui/icons';
 
@@ -152,6 +153,9 @@ async function handleActivationSubmit() {
 }
 
 function completeOnboarding() {
+
+	enableRemote(remoteEnabled);
+
 	// // Mark onboarding complete in electron-store so it never triggers on launch again
 	// if (window.api && window.api.setStoreValue) {
 	//     window.api.setStoreValue('hasCompletedOnboarding', true);

@@ -30,13 +30,20 @@ class Discovery extends Bonjour {
 			case 'remote':
 			this.#updateStatus(value);
 			break;
+
+			case 'remoteEnabled':
+			if (value) this.#publish();
+			else this.#service.stop();
+			break;
 		}
 	}
 
 	startServer() {
 		const remote = store.registerListener('remote', this);
+		const enabled = store.registerListener('remoteEnabled', this);
 
-		this.#publish(remote);
+		if (enabled)
+			this.#publish(remote);
 	}
 
 	startClient(handler) {
@@ -139,6 +146,9 @@ class Discovery extends Bonjour {
 	}
 
 	#publish(remote) {
+
+		if (!remote)
+			remote = store.get('remote');
 
 		const name = this.name;
 		const port = store.port;

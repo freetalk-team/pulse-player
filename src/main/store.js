@@ -159,6 +159,7 @@ class Storage extends Store {
 	}
 
 	#setupRemote(prefs) {
+		prefs.remoteEnabled = false;
 		prefs.remote = {
 			name: `Pulse Player (${this.hostname})`,
 			username: getUsername(),
@@ -241,8 +242,12 @@ class Storage extends Store {
 		const emitChange = (k, v) => {
 			const listeners = this.#changeListeners.get(key);
 			if (listeners) {
-				for (const listener of listeners)
-					listener.onPrefChange(key, value);
+				for (const listener of listeners) {
+					if (typeof listener == 'function')
+						listener(value);
+					else
+						listener.onPrefChange(key, value);
+				}
 			}
 		};
 
@@ -299,7 +304,7 @@ class Storage extends Store {
 					// Return success data back to Svelte
 					return { success: true, features: license.features };
 				} else {
-					return { success: false, message: data.message || "Invalid license key definition." };
+					return { success: false, message: data.error || "Invalid license key definition." };
 				}
 			} catch (error) {
 				return { success: false, message: "Could not establish connection to the activation server." };

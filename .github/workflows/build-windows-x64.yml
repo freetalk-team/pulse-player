@@ -1,10 +1,10 @@
-name: Build Linux x64
+name: Build Windows x64
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-linux-x64:
+  build-windows-x64:
     runs-on: ubuntu-24.04
 
     steps:
@@ -18,26 +18,23 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci --os=linux --cpu=x64
+        run: npm ci --os=win32 --cpu=x64
 
-      - name: Build Linux x64
-        run: npm run build:linux -- --x64
+      - name: Build Windows x64
+        run: npm run build:win -- --x64
 
       # - name: Normalize artifact names
       #   shell: bash
       #   run: |
-      #     mv dist/pulse-player-*.AppImage \
-      #       dist/pulse-player-linux-x64.AppImage
+      #     mv dist/pulse-player-*-setup.exe \
+      #       dist/pulse-player-windows-x64-setup.exe
 
-      #     mv dist/pulse-player-*.deb \
-      #       dist/pulse-player-linux-x64.deb
-
-      #     mv dist/pulse-player-*.tar.gz \
-      #       dist/pulse-player-linux-x64.tar.gz
+      #     mv dist/pulse-player-*.zip \
+      #       dist/pulse-player-windows-x64.zip
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: linux-x64
+          name: windows-x64
           path: dist/
           if-no-files-found: error

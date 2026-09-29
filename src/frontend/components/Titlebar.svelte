@@ -79,21 +79,23 @@ function handleAction(cmd) {
 
 /* Dark theme */
 .titlebar {
-	@apply relative flex items-center justify-between h-8 min-h-[32px] flex-shrink-0 z-100 select-none
+	@apply relative flex items-center justify-between h-8 min-h-[32px] flex-shrink-0 z-100 select-none backdrop-blur-[10px] border-t border-b
 		bg-[linear-gradient(to_bottom,rgba(255,255,255,0.10),rgba(255,255,255,0.02))]
-		backdrop-blur-[10px]
-		border-t
-		border-b
 		border-t-[rgba(255,255,255,0.15)]
 		border-b-[rgba(255,255,255,0.05)]
-		shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12),0_4px_10px_rgba(0,0,0,0.6)];
+		shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12),0_4px_10px_rgba(0,0,0,0.6)]
+		light:bg-[linear-gradient(to_bottom,#f2f2f2,#acacac)]
+		light:border-t-[rgba(255,255,255,0.8)]
+		light:border-b-[rgba(0,0,0,0.18)]
+		light:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.9),0_4px_8px_rgba(0,0,0,0.4)]
+		;
 }
 
 .titlebar::before {
 	content: "";
-	@apply absolute inset-0
+	@apply absolute inset-0 pointer-events-none
 		bg-[linear-gradient(to_bottom,rgba(255,255,255,0.25),transparent_40%)]
-		pointer-events-none;
+		;
 }
 
 .titlebar::after {
@@ -101,14 +103,5 @@ function handleAction(cmd) {
 	@apply absolute left-0 right-0 -bottom-px h-px
 		bg-[rgba(0,0,0,0.35)];
 }
-
-/* Light theme */
-:global(.light-theme) .titlebar {
-	@apply bg-[linear-gradient(to_bottom,#f2f2f2,#acacac)]
-		border-t-[rgba(255,255,255,0.8)]
-		border-b-[rgba(0,0,0,0.18)]
-		shadow-[inset_0_1px_0_0_rgba(255,255,255,0.9),0_4px_8px_rgba(0,0,0,0.4)];
-}
-
 
 </style>

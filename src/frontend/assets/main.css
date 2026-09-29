@@ -50,6 +50,10 @@ text-slate-400
     --color-pulse-zinc-950: oklch(14.1% 0.005 285.823);
 }
 
+@custom-variant dark (&:where(html:not(.light-theme) *));
+@custom-variant light (&:where(html.light-theme *));
+
+
 :root {
 	--pulse-accent: #1db954; /* Your brand color */
 	--pulse-accent-rgb: 34, 197, 94;

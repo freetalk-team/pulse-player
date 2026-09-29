@@ -195,11 +195,10 @@ $: displayString = selectedDate.toLocaleDateString('en-US', {
 @reference '../../../assets/main.css';
 
 button.pick {
-	@apply w-full bg-zinc-950 border text-left flex items-center justify-between px-3 h-[34px] rounded-xl transition-all duration-200 text-xs font-semibold text-zinc-300 focus:outline-none;
-}
-
-:global(.light-theme) button.pick {
-	@apply bg-zinc-300/50 text-zinc-950 border-zinc-500/60;
+	@apply w-full border text-left flex items-center justify-between px-3 h-[34px] rounded-xl transition-all duration-200 text-xs font-semibold focus:outline-none
+		bg-zinc-950 text-zinc-300
+		light:bg-zinc-300/50 light:text-zinc-950 light:border-zinc-500/60
+	;
 }
 
 .dropdown .head {
