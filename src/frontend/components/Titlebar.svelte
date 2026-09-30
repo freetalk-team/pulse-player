@@ -4,14 +4,24 @@ import pkg from '@pkg';
 
 import { isDark } from '../stores/ui';
 
+let updateReady = $state(false);
+let updateVersion = $state(null);
+
 function toggleTheme() {
 	isDark.update(dark => !dark);
 }
 
 function handleAction(cmd) {
-	if (isElectron) {
-		api.ipc.send(`window:${cmd}`);
-	}
+	api.ipc.send(`window:${cmd}`);
+}
+
+api.on('update-downloaded', (data) => {
+	updateVersion = data.version;
+	updateReady = true;
+});
+
+function installUpdate() {
+	api.installUpdate();
 }
 
 </script>
@@ -25,41 +35,46 @@ function handleAction(cmd) {
 	<div class="flex items-center gap-2 pl-4 opacity-60">
 		<i class="fa-solid fa-bolt-lightning text-[10px] text-pulse-accent drop-shadow-[0_0_5px_rgba(29,185,84,0.5)]"></i>
 		<span class="text-[9px] uppercase font-black tracking-[0.25em]">{pkg.appname}</span>
-		<!-- <span class="flex items-center gap-1 ml-4 text-[12px] text-pulse-white/60">
-			<i class="fa-brands fa-ubuntu"></i>
-			<i class="fa-brands fa-windows"></i>
-			<i class="fa-brands fa-apple"></i>
-			<i class="fa-brands fa-google-play"></i>
-			<i class="fa-brands fa-app-store-ios"></i>
-		</span> -->
 	</div>
 
 	<!-- Right: Controls with 'no-drag' -->
 	<div class="flex items-center h-full" style="-webkit-app-region: no-drag">
 
-		<button on:click={toggleTheme} 
+		<button onclick={toggleTheme} 
 			class="title-btn hover:text-pulse-accent"
 			title="{$isDark ? 'Toggle light' : 'Toggle dark'}"
 		>
 			<i class="fa-solid {$isDark ? 'fa-sun' : 'fa-moon'} text-[12px]"></i>
 		</button>
 
+		{#if updateReady}
+			<button
+				class="mr-3 flex items-center gap-1.5 text-[10px] rounded-lg px-3 py-0.5 text-white transition-all bg-blue-600 hover:bg-blue-500 hover:shadow-sm"
+
+				title={`Update to v${updateVersion} is ready`}
+				onclick={installUpdate}
+			>
+				<i class="fa-solid fa-arrow-rotate-right text-[8px]"></i>
+				<span class="tracking-wider font-bold">UPDATE</span>
+			</button>
+		{/if}
+
 		<span class="text-[10px] font-mono opacity-50 mr-3">v{pkg.version}</span>
 
 		{#if __PLATFORM__ === 'desktop'}
-			<button on:click={() => handleAction('min')} 
+			<button onclick={() => handleAction('min')} 
 				class="title-btn hover:bg-pulse-white/10"
 				title="Minimize"
 			>
 				<i class="fa-solid fa-minus text-[9px]"></i>
 			</button>
-			<button on:click={() => handleAction('max')} 
+			<button onclick={() => handleAction('max')} 
 				class="title-btn hover:bg-pulse-white/10"
 				title="Maximize"
 			>
 				<i class="fa-regular fa-square text-[9px]"></i>
 			</button>
-			<button on:click={() => handleAction('close')} 
+			<button onclick={() => handleAction('close')} 
 				class="title-btn hover:bg-red-500/80 group"
 				title="Close"
 			>

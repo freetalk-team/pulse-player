@@ -243,7 +243,10 @@ const api = {
 		}
 
 		return res;
-	}
+	},
+
+	installUpdate() { ipc.send('update:install'); },
+	installApp() { return ipc.invoke('install:app'); }
 }
 
 const platform = {

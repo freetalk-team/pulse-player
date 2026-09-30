@@ -9,6 +9,8 @@ import Store from 'electron-store'
 
 import pkg from '../../package.json'
 
+import { isAppImage, installAppImage } from './appimage';
+
 const isProd = app.isPackaged;
 
 const LICENSE_PUB_KEY = `-----BEGIN PUBLIC KEY-----
@@ -320,6 +322,23 @@ class Storage extends Store {
 
 			return features;
 		});
+
+		ipcMain.handle('install:app', async () => {
+
+			let installed = false;
+
+			try {
+
+				await installAppImage();
+
+				installed = true;
+			}
+			catch (e) {
+				console.error('Failed to install app:', e.message);
+			}
+
+			return { installed };
+		});
 	}
 
 	#getPrefs() {
@@ -348,7 +367,8 @@ class Storage extends Store {
 		Object.assign(prefs, {
 			features: [...this.#features.keys()],
 			uid: this.uid,
-			isFirstRun
+			isFirstRun,
+			canInstall: isProd && isAppImage()
 		});
 
 		return prefs;

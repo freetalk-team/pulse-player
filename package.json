@@ -1,6 +1,6 @@
 {
   "name": "pulse-player",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Modern, lightweight media player",
   "appname": "Pulse Player",
   "nsd": "pulseplayer",
@@ -87,7 +87,7 @@
     "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.3.3",
     "electron": "^44.2.0",
-    "electron-builder": "^26.15.3",
+    "electron-builder": "^27.0.0-alpha.9",
     "electron-vite": "^5.0.0",
     "svelte": "^5.57.0",
     "svelte-dnd-action": "^0.9.79",

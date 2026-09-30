@@ -3,23 +3,23 @@ productName: Pulse Player
 directories:
   buildResources: build
 files:
-  - "out/**/*"
-  - "package.json"
-  - '!**/.vscode/*'
-  - '!src/**'
-  - '!native/src/**'
-  - '!native/build/**/*.o'
-  - '!native/build/**/*.a'
-  - '!electron.vite.config.{js,ts,mjs,cjs}'
-  - '!svelte.config.mjs'
-  - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
-  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
+  - out/**/*
+  - package.json
+  - "!**/.vscode/*"
+  - "!src/**"
+  - "!native/src/**"
+  - "!native/build/**/*.o"
+  - "!native/build/**/*.a"
+  - "!electron.vite.config.{js,ts,mjs,cjs}"
+  - "!svelte.config.mjs"
+  - "!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}"
+  - "!{.env,.env.*,.npmrc,pnpm-lock.yaml}"
 extraResources:
-  - from: "resources/web"
-    to: "web"
-asar: true
-asarUnpack:
-  - resources/**
+  - from: resources/web
+    to: web
+asar:
+  unpack:
+    - resources/**
 win:
   executableName: pulse-player
   icon: icon.ico
@@ -34,13 +34,14 @@ nsis:
   createDesktopShortcut: always
   include: installer.nsh
 mac:
-  entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
     - NSCameraUsageDescription: Application requests access to the device's camera.
     - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
   notarize: false
+  sign:
+    entitlementsInherit: build/entitlements.mac.plist
 dmg:
   artifactName: ${name}-${version}.${ext}
 linux:
@@ -49,14 +50,13 @@ linux:
     - AppImage
     - deb
     - tar.gz
-  syncDesktopName: true
   desktop:
     entry:
       Name: Pulse Player
       Comment: Modern, lightweight media player
       Categories: AudioVideo;Audio;Video;Network
       Keywords: audio;video;player
-      StartupWMClass: pulse-player       # helps window managers match window to icon
+      StartupWMClass: pulse-player
       Terminal: false
       Type: Application
   executableName: pulse-player
@@ -66,9 +66,10 @@ linux:
   icon: icon.png
   synopsis: Pulse Player
   description: Play and organize your music
-npmRebuild: false
 publish:
   provider: github
   owner: freetalk-team
   repo: pulse-player
-
+  channel: latest-${arch}
+nativeModules:
+  npmRebuild: false

@@ -14,6 +14,7 @@ import { Colors } from './components/ui/icons';
 
 import IconPicker from './components/ui/controls/IconPicker.svelte';
 import IconColor from './components/ui/controls/IconColor.svelte';
+import Checkbox from './components/onboarding/Checkbox.svelte';
 import Progress from './components/ui/Progress.svelte';
 import Watermark from './components/main/Watermark.svelte';
 
@@ -22,6 +23,7 @@ export let complete = false;
 let step = 1;
 let selectedPath = "";
 let remoteEnabled = true;
+let installApp = false;
 let hostname;
 let username;
 let icon;
@@ -29,6 +31,7 @@ let iconColor;
 let activationKey = '';
 
 // UI state flags
+let canInstall = false;
 let isActivating = false;
 let activationStatus = 'idle'; // 'idle' | 'success' | 'error'
 let errorMessage = "";
@@ -65,16 +68,19 @@ $: isValidFormat = /^PP-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(activationKey
 // $: hasKeyError = isKeyTyped && isKeyComplete && !isValidFormat;
 
 onMount(async () => {
+	
+	const prefs = await api.getPrefs();
 
 	features = await api.getFeatures();
 
-	selectedPath = api.getPref('dir').music;
+	canInstall = prefs.canInstall;
+	selectedPath = prefs.dir.music;
 	//licensedFeatures = api.getPref('features');
 
 	console.debug('Music dir:', selectedPath);
 	//console.debug('Features:', licensedFeatures);
 
-	const remote = api.getPref('remote');
+	const remote = prefs.remote;
 
 	hostname = remote.name;
 	username = remote.username;
@@ -156,6 +162,9 @@ function completeOnboarding() {
 
 	enableRemote(remoteEnabled);
 
+	if (installApp)
+		api.installApp();
+
 	// // Mark onboarding complete in electron-store so it never triggers on launch again
 	// if (window.api && window.api.setStoreValue) {
 	//     window.api.setStoreValue('hasCompletedOnboarding', true);
@@ -189,11 +198,17 @@ function completeOnboarding() {
 			<div class="main-content">
 				<div class="relative h-full w-full">
 					<Watermark />
-					<div class="space-y-4 max-w-sm">
+					<div class="space-y-4">
 						<h1 class="text-3xl font-black tracking-tight text-white">Your music, offline.</h1>
-						<p class="text-sm text-zinc-400 leading-relaxed">
+						<p class="text-sm text-zinc-400 leading-relaxed max-w-sm">
 							A lightweight audio setup engineered for speed, minimalism, and your local music archive. Ready to begin?
 						</p>
+
+						{#if canInstall}
+							<Checkbox bind:checked={installApp} 
+								label="Add Pulse Player to Applications"
+								description="Create a desktop launcher for easy access." />
+						{/if}
 					</div>
 				</div>
 				<div class="footer justify-end">
@@ -435,31 +450,11 @@ function completeOnboarding() {
 			<!-- Right Side: Content & Forms -->
 			<div class="main-content overflow-y-auto custom-scrollbar">
 				<div class="w-full space-y-6">
-					
-					<!-- Your Custom Styled Checkbox Component Wrapper -->
-					<label class="flex items-center gap-3 cursor-pointer select-none group text-xs text-zinc-400 hover:text-zinc-200 transition-colors bg-zinc-950/40 p-4 rounded-xl border border-zinc-800/80">
-						<input 
-							type="checkbox" 
-							bind:checked={remoteEnabled} 
-							class="sr-only" 
-						/>
 
-						<div class="w-5 h-5 rounded-md border flex items-center justify-center transition-all duration-200 relative overflow-hidden
-							{remoteEnabled 
-								? 'bg-purple-600 border-purple-500 shadow-md shadow-purple-600/20 scale-100' 
-								: 'border-white/10 bg-black/40 group-hover:border-white/20'}"
-						>
-							<i class="fa-solid fa-check text-[10px] text-white transition-all duration-200 transform
-								{remoteEnabled ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}"
-							></i>
-							<div class="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-						</div>
-
-						<div class="flex flex-col text-left">
-							<span class="font-semibold tracking-tight text-sm text-zinc-200">Enable Remote Connection Access</span>
-							<span class="text-[11px] text-zinc-500 mt-0.5">Starts NSD discovery client and localized HTTP/REST web server profile.</span>
-						</div>
-					</label>
+					<Checkbox bind:checked={remoteEnabled}
+						label="Enable Remote Connection Access"
+						description="Starts NSD discovery client and localized HTTP/REST web server profile." 
+					/>
 
 					<!-- Conditionally Display Options if Enabled -->
 					{#if remoteEnabled}

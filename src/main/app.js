@@ -8,6 +8,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 
 import icon from '../../resources/icon.png?asset'
 
+import { initUpdater } from './updater';
 import { registerProtocolHandlers } from './protocol';
 import { setupIpcHandlers } from './ipc';
 import { setupEventHandlers } from './events';
@@ -44,31 +45,33 @@ export function startApp() {
 		console.error('Cannot get instance lock!');
 		app.quit();
 		process.exit(0);
-	} else {
-		app.on('second-instance', (event, commandLine, workingDirectory) => {
-			// Someone tried to run a second instance
-			console.debug('Running instance found!');
+		return;
+	} 
 
-			if (mainWindow) {
-				// Restore if minimized
-				if (mainWindow.isMinimized()) {
-					mainWindow.restore();
-				}
 
-				// Show if hidden
-				if (!mainWindow.isVisible()) {
-					mainWindow.show();
-				}
+	app.on('second-instance', (event, commandLine, workingDirectory) => {
+		// Someone tried to run a second instance
+		console.debug('Running instance found!');
 
-				// Bring to front
-				mainWindow.focus();
-
-				// Optional: force on top briefly
-				mainWindow.setAlwaysOnTop(true);
-				mainWindow.setAlwaysOnTop(false);
+		if (mainWindow) {
+			// Restore if minimized
+			if (mainWindow.isMinimized()) {
+				mainWindow.restore();
 			}
-		});
-	}
+
+			// Show if hidden
+			if (!mainWindow.isVisible()) {
+				mainWindow.show();
+			}
+
+			// Bring to front
+			mainWindow.focus();
+
+			// Optional: force on top briefly
+			mainWindow.setAlwaysOnTop(true);
+			mainWindow.setAlwaysOnTop(false);
+		}
+	});
 
 	// This method will be called when Electron has finished
 	// initialization and is ready to create browser windows.
@@ -113,7 +116,8 @@ export function startApp() {
 
 	registerProtocolHandlers();
 
-	createWindow()
+	createWindow();
+	initUpdater(handler);
 
 	app.on('activate', function () {
 		// On macOS it's common to re-create a window in the app when the
