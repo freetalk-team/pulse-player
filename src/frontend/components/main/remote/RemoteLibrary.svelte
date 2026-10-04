@@ -2,8 +2,6 @@
 
 import { onMount } from 'svelte';
 
-import { scrollHover } from '../../../actions';
-
 import { isLoading, hasMore, fetch, items } from '../../../stores/remote/library';
 import { currentRemote } from '../../../stores/remote';
 
@@ -116,9 +114,7 @@ function onSearchChange(query) {
 </div>
 
 
-<div class="flex-1 overflow-y-auto custom-scroll min-w-0 flex flex-col px-6"
-    use:scrollHover
->
+<div class="flex-1 auto-hide-scrollbar min-w-0 flex flex-col px-6">
 	<Video />
 
 	<div class="py-4">

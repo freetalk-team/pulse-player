@@ -27,45 +27,55 @@ let searchTimeout;
 
 const lastRequest = {};
 
-activeOrder.subscribe(v => {
-	if (!loaded) return;
-	fetch({}, true);
-});
 
-searchQuery.subscribe(v => {
-	if (!loaded) return;
+export function initRadio() {
+	let initialized = false;
 
+	activeOrder.subscribe(v => {
+		if (!initialized) return;
+		fetch({}, true);
+	});
 
-	if (searchTimeout)
-		clearTimeout(searchTimeout);
+	searchQuery.subscribe(v => {
 
-	searchTimeout = setTimeout(() => {
+		if (!initialized) return;
 
-		let s = v.trim();
-		if (s.length <= 2) s = '';
+		if (searchTimeout)
+			clearTimeout(searchTimeout);
 
-		if (s != search) {
-			search = s;
-			fetch({}, true);
-		}
+		searchTimeout = setTimeout(() => {
 
-	}, SEARCH_TIMEOUT);
+			let s = v.trim();
+			if (s.length <= 2) s = '';
 
-});
+			if (s != search) {
+				search = s;
+				fetch({}, true);
+			}
 
+		}, SEARCH_TIMEOUT);
+
+	});
+
+	initialized = true;
+}
 
 export async function loadStations() {
 	if (loaded) return;
 
-	let stations;
+	try {
+		let stations;
 
-	stations = await api.loadFavouriteStations();
-	favourite.set(stations);
+		stations = await api.loadFavouriteStations();
+		favourite.set(stations);
 
-	stations = await api.loadRecentStations();
-	recent.set(stations);
+		stations = await api.loadRecentStations();
+		recent.set(stations);
+	}
+	finally {
+		loaded = true;
+	}
 
-	loaded = true;
 }
 
 export function selectStation(station) {
@@ -141,7 +151,7 @@ function buildQuery(params, lastRequest) {
 		params.sort != lastRequest.sort ||
 		params.favourite != lastRequest.favourite; 
 
-	//console.debug('Query:', changed, params, lastRequest);
+	console.debug('Query:', changed, params, lastRequest);
 
 	Object.assign(lastRequest, params);
 	

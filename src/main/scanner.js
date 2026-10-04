@@ -6,7 +6,7 @@ import crypto from 'crypto';
 import { WorkerBase } from './worker';
 
 import store from './store';
-import lib from './services/library';
+import { Path } from './services/common';
 import remote from './services/remote';
 
 const THUMBS_DIR = store.thumbDir;
@@ -48,12 +48,12 @@ class ScanWorker extends WorkerBase {
 			case 'progress':
 			console.debug(`Progress: (${msg.processed}/${msg.total})`)
 
-			localThumbPaths(msg.tracks);
+			Path.localThumbPaths(msg.tracks);
 			this.#handler('import-progress', msg);
 			break
 
 			case 'album': {
-				const album = localCoverPath(msg.album);
+				const album = Path.localCoverPath(msg.album);
 				album.type = 'album';
 
 				this.#handler('import-album', album);
@@ -121,7 +121,7 @@ class DownloadWorker extends WorkerBase {
 			case 'COMPLETED':
 			switch (msg.itemType) {
 				case 'album': {
-					const album = localCoverPath(msg.item);
+					const album = Path.localCoverPath(msg.item);
 					album.type = 'album';
 
 					this.#handler('import-album', album);
@@ -132,7 +132,7 @@ class DownloadWorker extends WorkerBase {
 						this.#handler('import-progress', {
 							processed: count,
 							total: count,
-							tracks: localThumbPaths(album.tracks) 
+							tracks: Path.localThumbPaths(album.tracks) 
 						});
 					}
 				}
@@ -154,7 +154,7 @@ class DownloadWorker extends WorkerBase {
 						.slice(0, 4)
 						.join(',');
 
-					localCoverPath(playlist);
+					Path.localCoverPath(playlist);
 
 					this.#handler('playlist:added', playlist);
 
@@ -164,14 +164,14 @@ class DownloadWorker extends WorkerBase {
 						this.#handler('import-progress', {
 							processed: count,
 							total: count,
-							tracks: localThumbPaths(tracks) 
+							tracks: Path.localThumbPaths(tracks) 
 						});
 					}
 				}
 				break;
 
 				case 'track':
-				this.#handler('track:added', localThumbPath(msg.item));
+				this.#handler('track:added', Path.localThumbPath(msg.item));
 				break;
 			}
 			break;
@@ -226,16 +226,4 @@ export function setupIpcHandlers(handler) {
 
 		}
 	});
-}
-
-function localThumbPath(track) {
-	return lib.constructor.localThumbPath(track);
-}
-
-function localThumbPaths(tracks) {
-	return lib.constructor.localTrackPaths(tracks);
-}
-
-function localCoverPath(album) {
-	return lib.constructor.localCoverPath(album);
 }

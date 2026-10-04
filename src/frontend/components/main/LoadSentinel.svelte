@@ -11,9 +11,9 @@ let isIntersecting = false;
 let observer;
 
 function loadMore() {
-	if (isIntersecting && !isLoading && hasMore) {
-		fetch();
-	}
+	console.debug('Sentinel load more');
+
+	fetch();
 }
 
 onMount(() => {

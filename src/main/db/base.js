@@ -316,7 +316,7 @@ export class DatabaseBase {
 
 		const [placeholders, values] = buildUpdate(data);
 
-		values.unshift(...wherevals);
+		values.push(...wherevals);
 
 		const sql = `
 			UPDATE ${this.table(table)} SET ${placeholders}

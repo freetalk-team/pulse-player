@@ -25,8 +25,11 @@ function handleDownload() {
 
 </script>
 
-<div class="group card">
-
+<div class="group card"
+	role="button" tabindex="0"
+	on:click|stopPropagation={() => playAlbum(item)}
+	on:keydown={(e) => e.key === 'Enter' && playAlbum(item)}
+>
 	<div class="absolute -top-1 -right-1 z-20 group-hover:hidden">
 		<HotNewBadge {item} />
 	</div>

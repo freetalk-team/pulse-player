@@ -17,7 +17,7 @@ onMount(() =>  currentRemote.subscribe(remote => setRemote(remote)));
 
 </script>
 
-<div class="flex-1 auto-hide-scrollbar:hover min-w-0">
+<div class="flex-1 auto-hide-scrollbar min-w-0">
 	<div class="mx-auto flex min-w-0 max-w-6xl gap-8 p-8">
 
 		<div class="min-w-0 flex-1 flex flex-col gap-6">

@@ -1,6 +1,5 @@
-
 import discovery from './discovery';
-
+import { Path } from './common';
 import { events } from '../events';
 
 const DESTROY_TIMEOUT = 60 * 1000;
@@ -300,26 +299,7 @@ class ClientManager {
 
 					item.remote = socket.remoteId;
 
-					switch (post.type) {
-						case 'track':
-						item.path = baseUrl + item.path;
-						if (item.thumb_path)
-							item.thumb_path = convertThumbPath(item.thumb_path, baseUrl);
-						break;
-
-						case 'album':
-						case 'playlist':
-						case 'playset':
-						if (item.cover_path)
-							item.cover_path = convertThumbPath(item.cover_path, baseUrl);
-						break;
-
-						case 'radio':
-						if (item.favicon)
-							item.favicon = convertThumbPath(item.favicon, baseUrl);
-						break;
-
-					}
+					Path.remotePath(item, baseUrl, post.type);
 				}
 
 				post.remote = socket.remoteId;
@@ -388,10 +368,6 @@ class ClientManager {
 
 		}, 5000);
 	}
-}
-
-function convertThumbPath(path, baseUrl) {
-	return path.split(',').map(i => baseUrl + i).join(',');
 }
 
 export default ClientManager.instance;

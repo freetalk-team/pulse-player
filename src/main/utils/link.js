@@ -53,7 +53,7 @@ export async function processLink(url) {
 
 			const filename = await Image.downloadThumb(metadata.image, CACHE_DIR);
 			
-			metadata.image = 'media://' + path.join(CACHE_DIR, filename);
+			metadata.image = path.join(CACHE_DIR, filename);
 		}
 
 		return metadata;

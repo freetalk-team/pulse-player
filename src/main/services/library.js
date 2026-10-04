@@ -8,6 +8,8 @@ import { LibraryDatabase } from '../db/library';
 import { TrackComponents } from '../components/track';
 import { Track } from '../utils/track';
 
+import { Path } from './common';
+
 const MIN_RECORDING_TIME = 120;
 
 class LibraryService {
@@ -33,92 +35,92 @@ class LibraryService {
 	queryTracks(params, remote=false) {
 		const tracks = this.#db.queryTracks(params);
 		return remote 
-			? LibraryService.remoteTrackPaths(tracks) 
-			: LibraryService.localTrackPaths(tracks);
+			? Path.remoteTrackPaths(tracks) 
+			: Path.localTrackPaths(tracks);
 	}
 
 	getRecentTracks(remote=false) {
 		const tracks = this.#db.getRecentTracks();
 		return remote 
-			? LibraryService.remoteTrackPaths(tracks) 
-			: LibraryService.localTrackPaths(tracks);
+			? Path.remoteTrackPaths(tracks) 
+			: Path.localTrackPaths(tracks);
 	} 
 
 
 	// Albums
 	getAlbum(id, remote=false) {
 		const album = this.#db.getAlbum();
-		return LibraryService.localCoverPath(album);
+		return Path.localCoverPath(album);
 	}
 
 	getAlbums(limit=20, remote=false) {
 		const albums = this.#db.getAlbums(limit);
-		return LibraryService.localCoverPaths(albums);
+		return Path.localCoverPaths(albums);
 	}
 
 	queryAlbums(params, remote=false) {
 		const albums = this.#db.queryAlbums(params);
 		return remote
-			? LibraryService.remoteCoverPaths(albums)
-			: LibraryService.localCoverPaths(albums);
+			? Path.remoteCoverPaths(albums)
+			: Path.localCoverPaths(albums);
 	}
 
 	getAlbumTracks(id, remote=false) {
 		const tracks = this.#db.getAlbumTracks(id);
 		return remote 
-			? LibraryService.remoteTrackPaths(tracks) 
-			: LibraryService.localTrackPaths(tracks);
+			? Path.remoteTrackPaths(tracks) 
+			: Path.localTrackPaths(tracks);
 	}
 
 	// playlists
 	getPlaylist(id, remote=false) {
 		const album = this.#db.getPlaylist();
-		return LibraryService.localCoverPath(album);
+		return Path.localCoverPath(album);
 	}
 
 	getPlaylists(limit=20) {
 		const albums = this.#db.getPlaylists(limit);
-		return LibraryService.localCoverPaths(albums);
+		return Path.localCoverPaths(albums);
 	}
 
 	queryPlaylists(params, remote=false) {
 		const playlists = this.#db.queryPlaylists(params);
 		return remote
-			? LibraryService.remoteCoverPaths(playlists)
-			: LibraryService.localCoverPaths(playlists);
+			? Path.remoteCoverPaths(playlists)
+			: Path.localCoverPaths(playlists);
 	}
 
 	getPlaylistTracks(id, remote=false) {
 		const tracks = this.#db.getPlaylistTracks(id);
 		return remote 
-			? LibraryService.remoteTrackPaths(tracks) 
-			: LibraryService.localTrackPaths(tracks);
+			? Path.remoteTrackPaths(tracks) 
+			: Path.localTrackPaths(tracks);
 	}
 
 	// playsets
 	getPlaysets(limit=20) {
 		const albums = this.#db.getPlaysets(limit);
-		return LibraryService.localCoverPaths(albums);
+		return Path.localCoverPaths(albums);
 	}
 
 	queryPlaysets(params, remote=false) {
 		const playsets = this.#db.queryPlaysets(params);
 		return remote
-			? LibraryService.remoteCoverPaths(playsets)
-			: LibraryService.localCoverPaths(playsets);
+			? Path.remoteCoverPaths(playsets)
+			: Path.localCoverPaths(playsets);
 	}
 	
 	getPlaysetMembers(id, remote=false) {
 		const members = this.#db.getPlaysetMembers(id);
-		return LibraryService.localCoverPaths(members);
+		return Path.localCoverPaths(members);
 	}
 
 	// collections
 	queryCollections(collection, params, remote=false) {
 		const collections = this.#db.queryCollections(collection, params);
 		return remote
-			? LibraryService.remoteCoverPaths(collections)
-			: LibraryService.localCoverPaths(collections);
+			? Path.remoteCoverPaths(collections)
+			: Path.localCoverPaths(collections);
 	}
 
 	async #fetchTrackMeta(track) {
@@ -199,68 +201,6 @@ class LibraryService {
 		}
 
 		this.#db.deleteTrack(id);
-	}
-
-	// common
-	static localTrackPaths(tracks) {
-		for (const t of tracks)
-			this.localThumbPath(t);
-
-		return tracks;
-	}
-
-	static localThumbPath(track) {
-		if (track.thumb_path && !isAbsolute(track.thumb_path))
-			track.thumb_path = localThumbPath(track.thumb_path);
-
-		return track;
-	}
-
-	static remoteTrackPaths(tracks) {
-		for (const t of tracks) {
-
-			const { name, ext } = parse(t.path);
-
-			t.path = `/media/${t.id}`;
-			t.mime = ext.substring(1).toLowerCase();
-
-			if (t.thumb_path)
-				t.thumb_path = remoteThumbPath(t.thumb_path);
-		}
-
-		return tracks;
-	}
-
-	static localCoverPaths(albums) {
-		for (const a of albums) 
-			LibraryService.localCoverPath(a);
-
-		return albums;
-	}
-
-	static localCoverPath(album) {
-		if (album.cover_path)
-			album.cover_path = album.cover_path
-				.split(',')
-				.unique()
-				.map(i => localThumbPath(i))
-				.join(',');
-
-		return album;
-	}
-
-	static remoteCoverPaths(albums) {
-		for (const a of albums) 
-			LibraryService.remoteCoverPath(a);
-
-		return albums;
-	}
-
-	static remoteCoverPath(album) {
-		if (album.cover_path)
-			album.cover_path = remoteCoverPath(album.cover_path);
-
-		return album;
 	}
 
 	registerHandlers(ipc) {
@@ -365,19 +305,5 @@ class LibraryService {
 	}
 }
 
-function localThumbPath(path) {
-	return join(store.thumbDir, path);
-}
-
-function remoteThumbPath(path) {
-	return isAbsolute(path) ? '' : `/thumb/${path}`;
-}
-
-function remoteCoverPath(path) {
-	return path.split(',')
-		.map(i => remoteThumbPath(i))
-		.join(',');
-
-}
 
 export default LibraryService.instance;

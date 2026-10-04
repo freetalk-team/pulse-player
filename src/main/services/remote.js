@@ -8,7 +8,7 @@ import { events } from "../events";
 import { RemoteDatabase } from "../db/remote";
 import { processLink } from '../utils/link';
 
-import { normalizeCoverPaths, normalizePaths, normalizeFaviconPath } from '../server/routes/common';
+import { Path } from './common';
 
 class RemoteService {
 
@@ -45,8 +45,20 @@ class RemoteService {
 			params.limit = params.limit || 20;
 		}
 
-		if (!remoteId) 
-			return this.#db.queryUserPosts(params, uid);
+		if (!remoteId) {
+			const posts = await this.#db.queryUserPosts(params, uid);
+
+			for (const i of posts) {
+
+				if (['post'].includes(i.type)) continue;
+
+				const item = JSON.parse(i.item);
+
+				i.item = Path.localPath(item, i.type);
+			}
+
+			return posts;
+		}
 
 		const remote = discovery.getRemote(remoteId);
 		if (!remote) return [];
@@ -74,27 +86,13 @@ class RemoteService {
 
 			for (const i of posts) {
 
-				if (i.type == 'post') continue;
+				if (['post'].includes(i.type)) continue;
 
 				const item = i.item;
+	
 				item.remote = remoteId;
 
-				switch (i.type) {
-
-					case 'track':
-
-					item.path = baseUrl + item.path;
-
-					if (item.thumb_path)
-						item.thumb_path = baseUrl + item.thumb_path;
-					break;
-
-					default:
-					if (item.cover_path)
-						item.cover_path = remoteCoverPath(baseUrl, item.cover_path);
-					
-					break;
-				}
+				Path.remotePath(item, baseUrl, i.type);
 			}
 
 			return posts;
@@ -104,6 +102,17 @@ class RemoteService {
 		}
 
 		return [];
+	}
+
+	async queryUserPosts(params, remoteId, uid) {
+		uid = uid || discovery.id;
+
+		if (!params.created_at) {
+			params.offset = params.offset ?? 0;
+			params.limit = params.limit || 20;
+		}
+
+		return this.#db.queryUserPosts(params, uid);
 	}
 
 	addPost(post) {
@@ -117,23 +126,9 @@ class RemoteService {
 		post.comments_count = 0;
 		post.reaction_count = 0;
 
+		Path.normalizePath(item, type);
+
 		const res = this.#db.add(post);
-
-		switch (type) {
-			case 'track':
-			normalizePaths(item);
-			break;
-
-			case 'album':
-			case 'playlist':
-			case 'playset':
-			normalizeCoverPaths(item);
-			break;
-
-			case 'radio':
-			normalizeFaviconPath(item);
-			break;
-		}
 
 		Object.assign(post, res);
 
@@ -405,20 +400,12 @@ function remoteUrl(remote) {
 	return `http://${remote.address}:${remote.port}`;
 }
 
-function remoteCoverPath(url, cover) {
-	return cover
-		.split(',')
-		.map(i => url + i)
-		.join(',');
-}
-
 function remoteTracks(tracks, url, remoteId) {
 	for (const i of tracks) {
 		i.remote = remoteId;
 		i.path = url + i.path;
 
-		if (i.thumb_path)
-			i.thumb_path = url + i.thumb_path;
+		Path.remoteThumbPath(i, url);
 	}
 
 	return tracks;
@@ -428,11 +415,11 @@ function remoteSets(sets, url, remoteId) {
 	for (const i of sets) {
 		i.remote = remoteId;
 
-		if (i.cover_path)
-			i.cover_path = remoteCoverPath(url, i.cover_path);
+		Path.remoteCoverPath(i, url);
 	}
 
 	return sets;
 }
+
 
 export default RemoteService.instance;

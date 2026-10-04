@@ -913,16 +913,16 @@ function setOrder(params) {
 
 function setOrderCollection(params) {
 	switch (params.sort) {
-		case 'rating':
-		params.order = ['total_rating', 'DESC'];
-		break;
-
 		case 'created':
 		params.order = ['created_at', 'DESC'];
 		break;
 
 		case 'recent':
 		params.order = ['last_played_at', 'DESC'];
+		break;
+
+		default:
+		params.order = ['total_rating', 'DESC'];
 		break;
 	}
 }

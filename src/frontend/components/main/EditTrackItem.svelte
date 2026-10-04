@@ -19,7 +19,7 @@ function handleRemoveTrack() {
 	<div class="w-10 h-10 flex-shrink-0 rounded-lg bg-black/40 border border-white/5 overflow-hidden flex items-center justify-center">
 		{#if track.thumb_path || track.cover_path}
 			<img 
-				src="media://{track.thumb_path || track.cover_path}" 
+				src={platform.resolve(track.thumb_path || track.cover_path)} 
 				class="w-full h-full object-cover" 
 				alt="" 
 			/>

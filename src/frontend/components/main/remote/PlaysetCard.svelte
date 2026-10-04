@@ -23,7 +23,10 @@ function formatDescription(item) {
 
 <div 
 	class="group card"
+	role="button" tabindex="0"
 	in:fade={{ duration: 400 }}
+	on:click|stopPropagation={() => playPlayset(item)}
+	on:keydown={(e) => e.key === 'Enter' && playPlayset(item)}
 >
 	<div class="absolute -top-1 -right-1 z-20 group-hover:hidden">
 		<HotNewBadge {item} />

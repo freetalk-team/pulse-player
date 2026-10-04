@@ -2,7 +2,9 @@
 import { sleep } from "../utils/sleep";
 
 export const LIMIT = 30;
+
 const LOADING_TIMEOUT = 400;
+const RENDERING_TIMEOUT = 100;
 
 export function fetchCall(apiCall, items, isLoading, hasMore, buildQuery=defaultBuildQuery) {
 
@@ -18,10 +20,16 @@ export function fetchCall(apiCall, items, isLoading, hasMore, buildQuery=default
 
 		const changed = buildQuery(query, lastRequest);
 
-		if (reset) {
-			if (!changed) 
-				return;
+		if (reset && !changed) return;
+		
+		fetching = true;
 
+		// 1. Generate a unique ID for this specific fetch call
+		const requestId = ++lastRequestId;
+
+		isLoading.set(true);
+
+		if (reset) {
 			offset = 0;
 
 			items.set([]);
@@ -31,12 +39,6 @@ export function fetchCall(apiCall, items, isLoading, hasMore, buildQuery=default
 		query.limit = query.limit || LIMIT;
 		query.offset = offset;
 
-		fetching = true;
-
-		// 1. Generate a unique ID for this specific fetch call
-		const requestId = ++lastRequestId;
-
-		isLoading.set(true);
 
 		// console.trace('Fetchig tracks ...');
 
@@ -65,6 +67,8 @@ export function fetchCall(apiCall, items, isLoading, hasMore, buildQuery=default
 			});
 
 			offset += LIMIT;
+
+			await sleep(RENDERING_TIMEOUT);
 
 		} finally {
 			// 3. Only stop loading if this is still the active request

@@ -40,7 +40,7 @@
 	{#key activeTrack?.path}
 		<video
 			bind:this={videoElement}
-			src="media://{activeTrack?.path}"
+			src={platform.resolve(activeTrack.path)}
 			class="w-full h-full {isPreview ? 'object-cover' : 'object-contain'}"
 			on:loadedmetadata={!isPreview ? syncPlayback : null} 
 			on:click={!isPreview ? () => isPlaying.update(p => !p) : null}

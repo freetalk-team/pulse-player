@@ -31,12 +31,12 @@ function handleDownload() {
 
 </script>
 
-<div 
-	class="group card"
+<div class="group card"
+	role="button" tabindex="0"
 	in:fade={{ duration: 400 }}
+	on:click|stopPropagation={() => playPlaylist(item)}
+	on:keydown={(e) => e.key === 'Enter' && playPlaylist(item)}
 >
-	
-
 	{#if activeDownload}
 		<CircleProgress progress={activeDownload.progress} />
 	{:else}

@@ -300,12 +300,13 @@ class RadioService {
 		console.debug('Setting provider:', api);
 
 		switch (api) {
-			case 'radio-browser':
-			this.#provider = new RadioBrowserProvider;
-			break;
 
 			case 'sipme':
 			this.#provider = new SipmeProvider;
+			break;
+
+			default:
+			this.#provider = new RadioBrowserProvider;
 			break;
 		}
 

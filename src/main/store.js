@@ -69,7 +69,7 @@ class Storage extends Store {
 
 	get thumbDir() { return this.#thumbDir; }
 	get thumbRadioDir() { return join(this.#thumbDir, 'radio'); }
-	get imageCacheDir() { return join(this.#appRoot, 'image-cache'); }
+	get imageCacheDir() { return join(this.#thumbDir, 'image'); }
 	get databaseDir() { return join(this.#appRoot, 'db'); }
 	get musicDir() { return app.getPath('music'); }
 	get videoDir() { return app.getPath('videos'); }

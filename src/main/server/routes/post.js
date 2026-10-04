@@ -1,7 +1,7 @@
 
 import remote from '../../services/remote';
 
-import { normalizeCoverPaths, normalizePaths } from './common'
+import { normalizeCoverPaths, normalizeFaviconPath, normalizePaths } from './common'
 
 export default async function routes(app) {
 
@@ -22,7 +22,7 @@ export default async function routes(app) {
 
 		console.debug('[SERVER] query posts:', query);
 
-		const posts = await remote.queryPosts(query, null, uid);
+		const posts = await remote.queryUserPosts(query, uid);
 
 		for (const i of posts) {
 
@@ -35,6 +35,10 @@ export default async function routes(app) {
 
 				case 'track':
 				normalizePaths(i.item);
+				break;
+
+				case 'radio':
+				normalizeFaviconPath(i.item);
 				break;
 
 				default:

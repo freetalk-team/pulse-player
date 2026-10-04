@@ -74,7 +74,7 @@ function onSeekingEnd() {
     {#key $currentTrack?.path}
 		<video
 			bind:this={videoElement}
-			src="media://{$currentTrack?.path}"
+			src={platform.resolve($currentTrack.path)}
 			class="w-full h-full object-contain"
 			on:loadedmetadata={handleMetadata}
 			on:timeupdate={handleTimeUpdate}

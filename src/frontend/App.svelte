@@ -9,6 +9,7 @@ import { initLayout, isAppReady, isHidden, loadingMessage, currentLayout, modalC
 import { clearSelection, isTheaterMode } from './stores/selection';
 import { loadLibrary } from './stores/library';
 import { initRemote } from './stores/remote';
+import { initRadio } from './stores/radio';
 
 import { closeContextMenu } from './components/ui/ContextMenu.svelte';
 import Titlebar from './components/Titlebar.svelte';
@@ -69,6 +70,7 @@ onMount(async () => {
 
 	await Promise.all([
 		initPlayer(),
+		initRadio(),
 		initRemote(),
 		initLayout(),
 		sleep(800)

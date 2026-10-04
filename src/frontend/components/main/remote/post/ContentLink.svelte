@@ -12,7 +12,7 @@ export let metadata;
 		{#if metadata.image}
 			<div class="relative w-full h-48 bg-zinc-900">
 				<img
-					src={metadata.image}
+					src={platform.resolve(metadata.image)}
 					alt={metadata.title}
 					class="w-full h-full object-cover"
 					on:error={(e) => (e.target.style.display = 'none')}
