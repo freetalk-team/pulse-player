@@ -31,8 +31,6 @@ modules:
         NODE_INCLUDE_DIR: /usr/lib/sdk/node22/include/node
 
     build-commands:
-      # - find node_modules/node-addon-api -maxdepth 1 -type f -print
-      # - node -p "require('node-addon-api').include"
 
       - cmake -S native -B build/linux-x64-release -G Ninja
           -DCMAKE_BUILD_TYPE=Release
@@ -50,9 +48,6 @@ modules:
           /app/lib/pulse-player-ffmpeg-linux-x64/package.json
 
     sources:
-      # - type: dir
-      #   path: ../../node-ffmpeg
-
       - type: git
         url: https://github.com/freetalk-team/pulse-player-ffmpeg.git
         tag: v1.0.0
@@ -70,19 +65,26 @@ modules:
   - name: pulse-player
     buildsystem: simple
 
+    build-options:
+      append-path: /usr/lib/sdk/node22/bin
+      env:
+        XDG_CACHE_HOME: /run/build/pulse-player/flatpak-node/cache
+        npm_config_cache: /run/build/pulse-player/flatpak-node/npm-cache
+        npm_config_offline: "true"
+        NODE_INCLUDE_DIR: /usr/lib/sdk/node22/include/node
+
     build-commands:
+      - npm ci --offline --ignore-scripts
+      - npm run build:release
+      - npx electron-builder --linux --dir
 
-      # Copy the existing Electron distribution
+      # Install the Electron application
       - mkdir -p /app/lib/pulse-player
-      - cp -a . /app/lib/pulse-player
+      - cp -a dist/linux-unpacked/. /app/lib/pulse-player/
 
-      # Replace the prebuilt native addon with the one
-      # compiled inside the Flatpak SDK.
-      - rm -rf
-          /app/lib/pulse-player/resources/app.asar.unpacked/node_modules/@freetalk-team/pulse-player-ffmpeg-linux-x64
+      - rm -rf /app/lib/pulse-player/resources/app.asar.unpacked/node_modules/@freetalk-team/pulse-player-ffmpeg-linux-x64
 
-      - mkdir -p
-          /app/lib/pulse-player/resources/app.asar.unpacked/node_modules/@freetalk-team/pulse-player-ffmpeg-linux-x64
+      - mkdir -p /app/lib/pulse-player/resources/app.asar.unpacked/node_modules/@freetalk-team/pulse-player-ffmpeg-linux-x64
 
       - cp -a
           /app/lib/pulse-player-ffmpeg-linux-x64/.
@@ -91,20 +93,18 @@ modules:
       # Remove temporary addon staging directory
       - rm -rf /app/lib/pulse-player-ffmpeg-linux-x64
 
-      # Launcher
       - install -Dm755 pulse-player-launcher /app/bin/pulse-player
-
-      # Desktop entry
       - install -Dm644 io.sipme.pulseplayer.desktop /app/share/applications/io.sipme.pulseplayer.desktop
-
-      # Icon
       - install -Dm644 io.sipme.pulseplayer.png /app/share/icons/hicolor/256x256/apps/io.sipme.pulseplayer.png
-
       - install -Dm644 io.sipme.pulseplayer.metainfo.xml /app/share/metainfo/io.sipme.pulseplayer.metainfo.xml
 
     sources:
-      - type: dir
-        path: ../dist/linux-unpacked
+      - type: git
+        url: https://github.com/freetalk-team/pulse-player.git
+        tag: v1.0.8
+        commit: 3002335024702c1ea4f38d4e2e041cc850d2683d
+
+      - generated-sources.json
 
       - type: file
         path: pulse-player-launcher
@@ -118,5 +118,4 @@ modules:
 
       - type: file
         path: io.sipme.pulseplayer.metainfo.xml
-
-      
+        

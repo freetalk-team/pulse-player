@@ -1,6 +1,7 @@
 node_modules
 build-flatpak
 repo-flatpak
+.flatpak-builder
 *.flatpak
 dist
 out
