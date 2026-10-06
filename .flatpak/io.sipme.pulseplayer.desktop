@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Pulse Player
+Comment=Modern, lightweight media player
+Exec=pulse-player %U
+Icon=io.sipme.pulseplayer
+Terminal=false
+Type=Application
+Categories=AudioVideo;Audio;Video;Network;
+Keywords=audio;video;player;
+StartupWMClass=pulse-player

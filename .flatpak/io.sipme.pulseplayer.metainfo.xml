@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+    <id>io.sipme.pulseplayer</id>
+
+    <name>Pulse Player</name>
+    <summary>Modern, lightweight media player</summary>
+
+    <icon type="stock">io.sipme.pulseplayer</icon>
+
+    <developer id="io.sipme">
+        <name>Freetalk Team</name>
+    </developer>
+
+    <metadata_license>CC0-1.0</metadata_license>
+
+    <description>
+        <p>
+            Pulse Player is a modern, lightweight media player for desktop
+            systems. It supports local audio and video playback, Internet
+            radio, media metadata, and remote control from compatible devices.
+        </p>
+    </description>
+
+    <launchable type="desktop-id">
+        io.sipme.pulseplayer.desktop
+    </launchable>
+
+    <url type="homepage">https://www.sipme.io/player</url>
+    <url type="bugtracker">https://github.com/freetalk-team/pulse-player/issues</url>
+    <url type="vcs-browser">https://github.com/freetalk-team/pulse-player</url>
+
+    <categories>
+        <category>AudioVideo</category>
+        <category>Audio</category>
+        <category>Video</category>
+    </categories>
+
+    <keywords>
+        <keyword>audio</keyword>
+        <keyword>video</keyword>
+        <keyword>music</keyword>
+        <keyword>radio</keyword>
+        <keyword>media</keyword>
+        <keyword>player</keyword>
+    </keywords>
+
+    <content_rating type="oars-1.1"/>
+
+    <provides>
+        <binary>pulse-player</binary>
+    </provides>
+
+    <releases>
+        <release version="1.0.8" date="2026-10-06">
+            <description>
+                <p>
+                    Initial Flatpak release of Pulse Player.
+                </p>
+            </description>
+        </release>
+    </releases>
+
+    <screenshots>
+        <screenshot type="default">
+            <caption>Play music and manage your media library</caption>
+            <image>https://www.sipme.io/screenshots/pulse-player-workbench.jpg</image>
+        </screenshot>
+        <screenshot>
+            <caption>Explore your media collections</caption>
+            <image>https://www.sipme.io/screenshots/pulse-player-video.jpg</image>
+        </screenshot>
+        <screenshot>
+            <caption>Listen to Internet radio stations</caption>
+            <image>https://www.sipme.io/screenshots/pulse-player-radio.jpg</image>
+        </screenshot>
+        <screenshot>
+            <caption>Share your collections locally</caption>
+            <image>https://www.sipme.io/screenshots/pulse-player-remote.jpg</image>
+        </screenshot>
+    </screenshots>
+</component>

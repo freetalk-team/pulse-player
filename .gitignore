@@ -1,5 +1,7 @@
 node_modules
-.flatpak-builder
+build-flatpak
+repo-flatpak
+*.flatpak
 dist
 out
 test
