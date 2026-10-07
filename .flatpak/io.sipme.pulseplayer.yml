@@ -101,8 +101,8 @@ modules:
     sources:
       - type: git
         url: https://github.com/freetalk-team/pulse-player.git
-        tag: v1.0.8
-        commit: 3002335024702c1ea4f38d4e2e041cc850d2683d
+        tag: v1.0.9
+        commit: 802635d347b3e60bde4785f249488fef5d447037
 
       - generated-sources.json
 
