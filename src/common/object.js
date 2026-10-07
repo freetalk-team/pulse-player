@@ -356,3 +356,9 @@ Array.prototype.min = function() {
 	return Math.min.apply(null, this);
 }
 
+Array.prototype.clean = function() {
+	for (const i of this)
+		Object.clean(i);
+
+	return this;
+}

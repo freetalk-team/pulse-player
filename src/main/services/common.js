@@ -231,19 +231,19 @@ function localThumbPath(path) {
 	return join(store.thumbDir, path);
 }
 
-function remoteThumbPath(path, url) {
+function remoteThumbPath(path, url='') {
 	return url + (isAbsolute(path) ? path : `/thumb/${path}`);
 }
 
-function remoteFaviconPath(path, url) {
+function remoteFaviconPath(path, url='') {
 	return url + (isAbsolute(path) ? path : `/thumb/radio/${path}`);
 }
 
-function remoteImagePath(path, url) {
+function remoteImagePath(path, url='') {
 	return url + (isAbsolute(path) ? path : `/thumb/image/${path}`);
 }
 
-function remoteCoverPath(path, url) {
+function remoteCoverPath(path, url='') {
 	return path.split(',')
 		.map(i => remoteThumbPath(i, url))
 		.join(',');

@@ -1,9 +1,6 @@
 <script>
 
-// Svelte 5
-//import { $derived } from 'svelte';
-
-import { scrollHover, tooltip } from '../../actions';
+import { tooltip } from '../../actions';
 
 import { clearSelection, searchQuery, activeOrder } from '../../stores/selection';
 import { selectedFilter, selectedPlaylist, selectedPlayset } from '../../stores/player';
