@@ -19,7 +19,7 @@
         });
 
         // 2. Get Scrollable Parent Boundaries (The "Main" container)
-        const scrollParent = wrapper.closest('.custom-scroll');
+        const scrollParent = wrapper.closest('.auto-hide-scrollbar');
         if (scrollParent) {
             const parentRect = scrollParent.getBoundingClientRect();
             mainViewportRect.set({

@@ -82,7 +82,9 @@ export class DatabaseBase {
 				? Array.isArray(columns) ? columns.join(',') : columns
 				: '*';
 
-			return this.#db.prepare(`SELECT ${cols} FROM ${this.table(table)} WHERE id=?`).get(id);
+			const row = this.#db.prepare(`SELECT ${cols} FROM ${this.table(table)} WHERE id=?`).get(id);
+
+			return Object.clean(row);
 		}
 		catch (e) {
 			console.error(`🚨 Failed to fetch ${table}:`, e);
@@ -95,7 +97,9 @@ export class DatabaseBase {
 		console.debug('[DB] find:', sql);
 
 		try {
-			return this.#db.prepare(sql).get(value);
+			const row = this.#db.prepare(sql).get(value);
+
+			return Object.clean(row);
 		}
 		catch (e) {
 			console.error(`🚨 Failed to find ${table}:`, e);
@@ -106,9 +110,11 @@ export class DatabaseBase {
 
 	ls(table, offset=0, limit=50) {
 		try {
-			return this.#db
+			const rows = this.#db
 				.prepare(`SELECT * FROM ${this.table(table)} LIMIT ? OFFSET ?`)
 				.all(limit, offset);
+
+			return rows.clean();
 		}
 		catch (e) {
 			console.error(`🚨 Failed to fetch ${table}:`, e);
@@ -117,9 +123,11 @@ export class DatabaseBase {
 
 	tail(table, offset=0, limit=50, orderBy='id') {
 		try {
-			return this.#db
+			const rows = this.#db
 				.prepare(`SELECT * FROM ${this.table(table)} ORDER BY ${orderBy} DESC LIMIT ? OFFSET ?`)
 				.all(limit, offset);
+
+			return rows.clean();
 		}
 		catch (e) {
 			console.error(`🚨 Failed to fetch ${table}:`, e);
@@ -189,7 +197,7 @@ export class DatabaseBase {
 
 			console.debug('[DB] results:', rows.length);
 
-			return rows;
+			return rows.clean();
 		}
 		catch (e) {
 			console.error(`🚨 Failed to query ${table}:`, e);
@@ -253,7 +261,7 @@ export class DatabaseBase {
 
 			console.debug('[DB] results:', rows.length);
 
-			return rows;
+			return rows.clean();
 		}
 		catch (e) {
 			console.error(`🚨 Failed to query ${table}:`, e);
@@ -312,6 +320,9 @@ export class DatabaseBase {
 
 				wherevals.push(id);
 			}
+		}
+		else {
+			wherevals.push(id);
 		}
 
 		const [placeholders, values] = buildUpdate(data);
